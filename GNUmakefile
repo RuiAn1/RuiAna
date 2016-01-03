@@ -30,7 +30,7 @@ SUBDIRS := TrackAnalysis Paddles #ADD_NEW_SUBDIR ... do not remove this comment 
 .phony: all clean
 
 all:
-	@for i in $(SUBDIRS); do ( echo "" && echo "Compiling $$i..." && cd $(LARLITE_USERDEVDIR)/ShiYan/$$i && $(MAKE) ) || exit $$?; done
+	@for i in $(SUBDIRS); do ( echo "" && echo "Compiling $$i..." && cd $(LARLITE_USERDEVDIR)/RuiAna/$$i && $(MAKE) ) || exit $$?; done
 #####################################################################################
 #
 # CLEANs...

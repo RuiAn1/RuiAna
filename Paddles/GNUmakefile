@@ -3,8 +3,8 @@
 #
 
 # specific names for this package
-DICT  = Shiyan_PaddlesDict
-SHLIB = libShiyan_Paddles.so
+DICT  = RuiAna_PaddlesDict
+SHLIB = libRuiAna_Paddles.so
 SOURCES = $(filter-out $(DICT).cxx, $(wildcard *.cxx))
 FMWK_HEADERS = LinkDef.h $(DICT).h
 HEADERS = $(filter-out $(FMWK_HEADERS), $(wildcard *.h))
@@ -27,6 +27,6 @@ include $(LARLITE_BASEDIR)/Makefile/Makefile.${OSNAME}
 # call the common GNUmakefile
 LDFLAGS += $(shell larlite-config --libs)
 LDFLAGS += $(shell seltool-config --libs)
-LDFLAGS += -L$(LARLITE_LIBDIR) -lShiYan_TrackAnalysis
+LDFLAGS += -L$(LARLITE_LIBDIR) -lRuiAna_TrackAnalysis
 
 include $(LARLITE_BASEDIR)/Makefile/GNUmakefile.CORE

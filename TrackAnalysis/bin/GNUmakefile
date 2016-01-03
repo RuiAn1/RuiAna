@@ -1,9 +1,9 @@
 # Include your header file location
-CXXFLAGS += -I$(LARLITE_USERDEVDIR)/ShiYan
+CXXFLAGS += -I$(LARLITE_USERDEVDIR)/RuiAna
 CXXFLAGS += -I. $(shell root-config --cflags) -g
 
 # Include your shared object lib location
-LDFLAGS += -L$(LARLITE_LIBDIR) -lShiYan_TrackAnalysis 
+LDFLAGS += -L$(LARLITE_LIBDIR) -lRuiAna_TrackAnalysis 
 LDFLAGS += $(shell root-config --libs) -lPhysics -lMatrix -g
 
 # platform-specific options

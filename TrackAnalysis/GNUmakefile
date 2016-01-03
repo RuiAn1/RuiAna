@@ -3,8 +3,8 @@
 #
 
 # specific names for this package
-DICT  = ShiYan_TrackAnalysisDict
-SHLIB = libShiYan_TrackAnalysis.so
+DICT  = RuiAna_TrackAnalysisDict
+SHLIB = libRuiAna_TrackAnalysis.so
 SOURCES = $(filter-out $(DICT).cxx, $(wildcard *.cxx))
 FMWK_HEADERS = LinkDef.h $(DICT).h
 HEADERS = $(filter-out $(FMWK_HEADERS), $(wildcard *.h))
