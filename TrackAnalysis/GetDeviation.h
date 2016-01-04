@@ -33,14 +33,15 @@ namespace larlite{
     /// Default destructor
     ~GetDeviation(){}
     
-    void getdist      (const ::geoalgo::Vector& pt_1 ,
-		       const ::geoalgo::Vector& pt_2 );
-    void getdeviation (const ::geoalgo::Trajectory& trj1 ,
-		       const ::geoalgo::Trajectory& trj2 );
+    double getdist      (const ::geoalgo::Vector& pt_1 ,
+			 const ::geoalgo::Vector& pt_2 );
+    void getdeviation (const std::vector<::geoalgo::Trajectory>& trjvec1 ,
+		       const std::vector<::geoalgo::Trajectory>& trjvec2 );
     // Getter functions
-    double getmean(){return _mean;}
-    double getstdev(){return _stdev;}
+    double getmean()      {return _mean;}
+    double getstdev()     {return _stdev;}
     double getdist_start(){return _dist_start;}
+    double getlen_tot()   {return _len_tot;}
     
   protected:
     ::geoalgo::GeoAlgo _geoAlgo;
@@ -48,6 +49,7 @@ namespace larlite{
     double _stdev;
     double _dist;
     double _dist_start;
+    double _len_tot = 0;
   };
 }
 #endif

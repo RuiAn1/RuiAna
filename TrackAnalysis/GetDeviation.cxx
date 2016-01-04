@@ -4,79 +4,76 @@
 #include "GetDeviation.h"
 
 namespace larlite{
-  void GetDeviation::getdist(const ::geoalgo::Vector& pt_1 ,
+  double GetDeviation::getdist(const ::geoalgo::Vector& pt_1 ,
 			     const ::geoalgo::Vector& pt_2 )
   {
     _dist = pt_1.Dist(pt_2);
+    return _dist;
   }
   
-  void GetDeviation::getdeviation ( const ::geoalgo::Trajectory& trj1 , 
-				    const ::geoalgo::Trajectory& trj2 )
+  void GetDeviation::getdeviation ( const std::vector<::geoalgo::Trajectory>& trjvec1 , 
+				    const std::vector<::geoalgo::Trajectory>& trjvec2 )
   {
-    /*std::cout<<"caonima\n";
-    std::cout<<"retrj"<<trj1.size()<<std::endl;
-    std::cout<<"mctrj"<<trj2.size()<<std::endl;
-    */
+    for (size_t n = 0 ; n<trjvec1.size() ; n++){
 
-    auto const& pt1 = trj1[0];
-    auto const& pt2 = trj2[0];
-    GetDeviation::getdist(pt1,pt2);
-    if (_dist > 10){
-      auto const& pt3 = trj1[trj1.size()-1];
-      GetDeviation::getdist(pt3,pt2);
-    }
-    _dist_start = _dist;
-    
-    if (_dist >2&&_dist<10){
-      std::cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@\n";
-      std::cout<<_dist<<std::endl;
-      std::cout<<trj1[0]<<std::endl;
-      std::cout<<trj1[1]<<std::endl;
-      std::cout<<trj2[trj2.size()-1]<<std::endl;
-      std::cout<<trj2[trj2.size()-1]<<std::endl;
-    }
-    std::vector<double> lens;
-    lens.clear();
-
-    double shit1 = 0;
-    double shit2 = 0;
-    for (size_t i=0; i<trj2.size()-1 ; ++i){
-      auto const& pt1 = trj2[i];
-      auto const& pt2 = trj2[i+1];
+      auto const& pt1 = trjvec1[0][0];
+      auto const& pt2 = trjvec2[0][0];
       GetDeviation::getdist(pt1,pt2);
-      shit2 += _dist;
-    }
-    for (size_t i=0; i<trj1.size()-1 ; ++i){
-      auto const& pt1 = trj1[i];
-      auto const& pt2 = trj1[i+1];
-      GetDeviation::getdist(pt1,pt2);
-      shit1 += _dist;
+      if (_dist > 10){
+	auto const& pt3 = trjvec1[trjvec1.size()-1][trjvec1[trjvec1.size()-1].size()-1];
+	GetDeviation::getdist(pt3,pt2);
+      }
+      _dist_start = _dist;
       
-      auto const& line1 = ::geoalgo::LineSegment(trj1[i],trj1[i+1]);
-      auto const& len = _geoAlgo.SqDist(line1, trj2);
-      //if(_dist>10) std::cout<<len<<std::endl;
-      //auto const& pt = trj1[i];
-      //auto const& len = _geoAlgo.SqDist(pt,trj2);
-      lens.push_back(len);
-      //std::cout<<len<<std::endl;
+      std::vector<double> devis;
+      std::vector<double> weights;
+      std::vector<double> weighted_devis;
+      devis.clear();
+      weights.clear();
+      weighted_devis.clear();
+      /*double shit2 = 0;
+      for (size_t i=0; i<trj2.size()-1 ; ++i){
+	auto const& pt1 = trj2[i];
+	auto const& pt2 = trj2[i+1];
+	GetDeviation::getdist(pt1,pt2);
+	shit2 += _dist;
+	}*/
+
+      // Compare devi from trj1 to trj2, so collect devis and weights from trj1
+      for (size_t i=0; i<trjvec1[n].size()-1 ; ++i){
+	auto const& pt1 = trjvec1[n][i];
+	auto const& pt2 = trjvec1[n][i+1];
+	GetDeviation::getdist(pt1,pt2);
+	_len_tot += _dist;
+	weights.push_back(_dist);
+	auto const& line1 = ::geoalgo::LineSegment(pt1, pt2);
+	auto const& devi = _geoAlgo.SqDist(line1, trjvec2);
+	//auto const& pt = trj1[i];
+	//auto const& devi = _geoAlgo.SqDist(pt,trj2);
+	devis.push_back(devi);
+	weighted_devis.push_back(_dist*devi);
+      }
+      /*std::cout<<"########################\n";
+	std::cout<<devis.size()<<std::endl;
+	std::cout<<weights.size()<<std::endl;
+	std::cout<<weighted_devis.size()<<std::endl;
+	
+	double sq_sum = std::inner_product(devis.begin(), devis.end(), devis.begin(), 0.0);
+	_mean = std::accumulate(std::begin(devis),std::end(devis),0.0)/devis.size();
+	
+	std::vector<double> diff(devis.size());
+	std::transform(devis.begin(), devis.end(), diff.begin(),
+	//std::bind2nd(std::minus<double>(), _mean));
+	std::bind2nd(std::minus<double>(), 0.0));
+	double sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
+      */
       
+      double weighted_sum = 0;
+      weighted_sum = std::accumulate(std::begin(weighted_devis),std::end(weighted_devis),0.0);
+      _stdev = weighted_sum / _len_tot;
+      
+      //std::cout<<stdev<<std::endl;
     }
-
-    double sq_sum = std::inner_product(lens.begin(), lens.end(), lens.begin(), 0.0);
-    
-    _mean = std::accumulate(std::begin(lens),std::end(lens),0.0)/lens.size();
-    /*
-    std::vector<double> diff(lens.size());
-    std::transform(lens.begin(), lens.end(), diff.begin(),
-		   //std::bind2nd(std::minus<double>(), _mean));
-		   std::bind2nd(std::minus<double>(), 0.0));
-    double sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
-    */
-
-    _stdev = std::sqrt(sq_sum / lens.size());
-    
-    //std::cout<<stdev<<std::endl;
-    
   }
 }
 

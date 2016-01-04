@@ -446,7 +446,7 @@ namespace larlite {
       if (_retrj.size()==1&&_mctrj.size()==1){
 
 	::larlite::GetDeviation GD;
-	GD.getdeviation(_retrj[0],_mctrj[0]);
+	GD.getdeviation(_retrj,_mctrj);
 	_mean       = GD.getmean();
 	_stdev      = GD.getstdev();
 	_dist_start = GD.getdist_start();

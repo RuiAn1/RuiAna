@@ -137,7 +137,7 @@ namespace larlite {
 	if (_retrj.size()==1&&_mctrj.size()==1){
 	  
 	  GetDeviation GD;
-	  GD.getdeviation(_retrj[0],_mctrj[0]);
+	  GD.getdeviation(_retrj,_mctrj);
 	  //std::cout<<"lalalala\n"<<_stdev<<std::endl;
 	}
 	
