@@ -37,7 +37,8 @@ namespace larlite{
 	auto const& pt2 = trj2[i+1];
 	GetDeviation::getdist(pt1,pt2);
 	shit2 += _dist;
-	}*/
+	}
+      */
 
       // Compare devi from trj1 to trj2, so collect devis and weights from trj1
       for (size_t i=0; i<trjvec1[n].size()-1 ; ++i){
