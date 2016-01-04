@@ -76,9 +76,12 @@ namespace larlite {
     */
     virtual bool finalize();
 
-    //setter function
+    // setter function
     bool UseData       (bool use) {_useData       = use ; _useSimulation = !use; return  _useData;}
     bool UseQCluster   (bool use) {_useQCluster   = use ; _useMCQCluster = !use ;return  _useQCluster;}
+    // getter function
+    std::vector<::geoalgo::Trajectory> Getretrj()      {return _retrj;}
+    std::vector<::geoalgo::Trajectory> Getmctrj()      {return _mctrj;}
     
   protected:
     
