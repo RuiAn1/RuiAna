@@ -41,9 +41,9 @@ namespace larlite {
     */
     _tree->Branch("retrk_len_tot",&_retrk_len_tot,"_retrk_len_tot/D");
     _tree->Branch("mctrk_len_tot",&_mctrk_len_tot,"_mctrk_len_tot/D");
-    /*_tree->Branch("n_mctrk_size_tot",&_n_mctrk_size_tot,"_n_mctrk_size_tot/S");
+    _tree->Branch("n_mctrk_size_tot",&_n_mctrk_size_tot,"_n_mctrk_size_tot/S");
     _tree->Branch("n_retrk_size_tot",&_n_retrk_size_tot,"_n_retrk_size_tot/S");
-    _tree->Branch("n_QClusters_size",&_n_QClusters_size,"_n_QClusters_size/S");
+    /*_tree->Branch("n_QClusters_size",&_n_QClusters_size,"_n_QClusters_size/S");
     _tree->Branch("n_QClusters_size_size",&_n_QClusters_size_size,"_n_QClusters_size_size/S");
     */
     _tree->Branch("zenith",&_theta,"_theta/D");
@@ -442,7 +442,7 @@ namespace larlite {
 	}
       }
       //Get Deviation
-
+      /*
       if (_retrj.size()==1&&_mctrj.size()==1){
 
 	::larlite::GetDeviation GD;
@@ -451,7 +451,7 @@ namespace larlite {
 	_stdev      = GD.getstdev();
 	_dist_start = GD.getdist_start();
 	
-      }
+	}*/
       
       //MCQCluster
       if(_useMCQCluster){
