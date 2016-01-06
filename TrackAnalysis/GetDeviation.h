@@ -39,16 +39,20 @@ namespace larlite{
 		       const std::vector<::geoalgo::Trajectory>& trjvec2 );
     // Getter functions
     double getmean()      {return _mean;}
-    double getstdev()     {return _stdev;}
+    double getdevi()      {return _devi;}
+    double getw8devi()    {return _w8devi;}
     double getdist_start(){return _dist_start;}
+    double getdevi_start(){return _devi_start;}
     double getlen_tot()   {return _len_tot;}
     
   protected:
     ::geoalgo::GeoAlgo _geoAlgo;
     double _mean;
-    double _stdev;
+    double _devi;
+    double _w8devi;
     double _dist;
     double _dist_start;
+    double _devi_start;
     double _len_tot = 0;
   };
 }

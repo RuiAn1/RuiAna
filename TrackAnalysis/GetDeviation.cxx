@@ -19,10 +19,10 @@ namespace larlite{
       auto const& pt1 = trjvec1[0][0];
       auto const& pt2 = trjvec2[0][0];
       GetDeviation::getdist(pt1,pt2);
-      if (_dist > 10){
+      /*if (_dist > 10){
 	auto const& pt3 = trjvec1[trjvec1.size()-1][trjvec1[trjvec1.size()-1].size()-1];
 	GetDeviation::getdist(pt3,pt2);
-      }
+	}*/
       _dist_start = _dist;
       
       std::vector<double> devis;
@@ -49,8 +49,19 @@ namespace larlite{
 	weights.push_back(_dist);
 	auto const& line1 = ::geoalgo::LineSegment(pt1, pt2);
 	auto const& devi = _geoAlgo.SqDist(line1, trjvec2);
+	//auto const& devi = _geoAlgo.SqDist(pt1, trjvec2);
+	/*
+	std::cout<<"@@@@@@@@@@@@@@@\n";
+	std::cout<<"devi= "<< devi<<std::endl;
+	std::cout<<"pt1 in linesegment is :"<<pt1<<"\n pt2 in linesegment is :"<<pt2<<std::endl;
+	for(int p = 0; p < trjvec2[0].size();++p){
+	  std::cout<<trjvec2[0][p]<<std::endl;
+	}
+	std::cout<<"@@@@@@@@@@@@@@@\n";
+	*/	
 	//auto const& pt = trj1[i];
 	//auto const& devi = _geoAlgo.SqDist(pt,trj2);
+	if (i == 0 ) _devi_start = devi;
 	devis.push_back(devi);
 	weighted_devis.push_back(_dist*devi);
       }
@@ -70,8 +81,11 @@ namespace larlite{
       */
       
       double weighted_sum = 0;
+      double devi_sum = 0;
+      devi_sum = std::accumulate(std::begin(devis),std::end(devis),0.0);
+      _devi =  devi_sum / devis.size();
       weighted_sum = std::accumulate(std::begin(weighted_devis),std::end(weighted_devis),0.0);
-      _stdev = weighted_sum / _len_tot;
+      _w8devi = weighted_sum / _len_tot;
       
       //std::cout<<stdev<<std::endl;
     }

@@ -23,8 +23,10 @@ namespace larlite {
     _tree->Branch("n_mctrack",&_n_mctrack,"_n_mctrack/I");
     _tree->Branch("n_recotrack",&_n_recotrack,"_n_recotrack/I");
     _tree->Branch("mean",&_mean,"_mean/D");
-    _tree->Branch("stdev",&_stdev,"_stdev/D");
+    _tree->Branch("w8devi",&_w8devi,"_w8devi/D");
+    _tree->Branch("devi",&_devi,"_devi/D");
     _tree->Branch("dist_start",&_dist_start,"_dist_start/D");
+    _tree->Branch("devi_start",&_devi_start,"_devi_start/D");
     /*_tree->Branch("retrk_start_x",&_retrk_start_x,"_retrk_start_x/D");
     _tree->Branch("retrk_start_y",&_retrk_start_y,"_retrk_start_y/D");
     _tree->Branch("retrk_start_z",&_retrk_start_z,"_retrk_start_z/D");
@@ -114,8 +116,8 @@ namespace larlite {
     /////////////////////////////////////////////////////
     
     if(_useData){
-      //auto ev_reco = storage->get_data<event_track>("trackkalmanhit");
-      auto ev_reco = storage->get_data<event_track>("stitchkalmanhit");
+      auto ev_reco = storage->get_data<event_track>("trackkalmanhit");
+      //auto ev_reco = storage->get_data<event_track>("stitchkalmanhit");
       if (!ev_reco) {
 	std::cout<<"........Couldn't find reco track data product in this event...... "<<std::endl;
       }
@@ -132,6 +134,24 @@ namespace larlite {
 	std::cout<<"........Couldn't find opflash data product in this event...... "<<std::endl;
 	}
       */
+
+      _n_recotrack = ev_reco->size();
+      /*
+      for(size_t opf = 0; opf < ev_opflash->size(); opf++){
+	auto const& opflash = ev_opflash->at(opf);
+	_t_opflash.push_back(opflash.Time());
+
+	}*/
+      
+      for(size_t oph = 0; oph < ev_ophit->size(); oph++){
+	auto const& ophit = ev_ophit->at(oph);
+	_t_ophit.push_back(ophit.PeakTime());
+	_ophit_pe.push_back(ophit.PE());
+	if(ophit.PeakTime()>-1 &&ophit.PeakTime()<-0.85){
+	  auto const pmt_id = geo->OpDetFromOpChannel(ophit.OpChannel());
+	  _pe_ophit[pmt_id] += ophit.PE();
+	}
+      }
       
       for(size_t i = 0; i <ev_reco->size(); i++ ){
 	
@@ -197,28 +217,6 @@ namespace larlite {
 	    _MuCS_ints_x_bottom =  intersection_trj_prj_bottom.at(0).at(0);
 	    _MuCS_ints_z_bottom =  intersection_trj_prj_bottom.at(0).at(2);
 	    
-	    {
-	      /*
-		for(size_t opf = 0; opf < ev_opflash->size(); opf++){
-		auto const& opflash = ev_opflash->at(opf);
-		_t_opflash.push_back(opflash.Time());
-		
-		}
-	      */
-	    }//loop over all opflashes
-	    
-	    {
-	      for(size_t oph = 0; oph < ev_ophit->size(); oph++){
-		auto const& ophit = ev_ophit->at(oph);
-		_t_ophit.push_back(ophit.PeakTime());
-		_ophit_pe.push_back(ophit.PE());
-		if(ophit.PeakTime()>-1 &&ophit.PeakTime()<-0.85){
-		  auto const pmt_id = geo->OpDetFromOpChannel(ophit.OpChannel());
-		  _pe_ophit[pmt_id] += ophit.PE();
-		}
-	      }
-	    }//4)Part above, get the ophit
-	    
 	    _run    = storage->get_data<event_track>("trackkalmanhit")->run();
 	    _subrun = storage->get_data<event_track>("trackkalmanhit")->subrun();
 	    _event  = storage->get_data<event_track>("trackkalmanhit")->event_id();
@@ -271,47 +269,47 @@ namespace larlite {
 	    
 	    //7)further select events
 	    
-	    {
-	      double length = trj.Length();
-	      _length_trj_prj_fv = 0;
-	      _length_trj_prj_fv_neg = 0;
-	      
-	      if(length>150){//1ST, track length larger than 50cm
-		std::vector<double> pt1,pt2,delta_p12;
-		pt1.resize(3,0.0);
-		pt2.resize(3,0.0);
-		delta_p12.resize(3,0.0);
-		if(intersection_trj_prj_fv.size()>0){//2ND, sum of gaps btw start/end of track and fv smaller than
-		  pt1 = intersection_trj_prj_fv[0];
-		  for(size_t i = 0; i<3 ; i++){
-		    pt2[i] = trj.at(0).at(i);
-		    delta_p12.push_back(pt1.at(i)-pt2.at(i));
-		  }
-		  _length_trj_prj_fv = sqrt(std::inner_product(begin(delta_p12), end(delta_p12), begin(delta_p12), 0.0));
+	    
+	    double length = trj.Length();
+	    _length_trj_prj_fv = 0;
+	    _length_trj_prj_fv_neg = 0;
+	    
+	    if(length>150){//1ST, track length larger than 50cm
+	      std::vector<double> pt1,pt2,delta_p12;
+	      pt1.resize(3,0.0);
+	      pt2.resize(3,0.0);
+	      delta_p12.resize(3,0.0);
+	      if(intersection_trj_prj_fv.size()>0){//2ND, sum of gaps btw start/end of track and fv smaller than
+		pt1 = intersection_trj_prj_fv[0];
+		for(size_t i = 0; i<3 ; i++){
+		  pt2[i] = trj.at(0).at(i);
+		  delta_p12.push_back(pt1.at(i)-pt2.at(i));
 		}
-		pt1.resize(3,0.0);
-		pt2.resize(3,0.0);
-		delta_p12.resize(3,0.0);
-		if(intersection_trj_prj_fv_neg.size()>0){
-		  pt1 = intersection_trj_prj_fv_neg[0];
-		  for(size_t i = 0; i<3 ; i++){
-		    pt2[i] = trj.at(trj.size()-1).at(i);
-		    delta_p12.push_back(pt1.at(i)-pt2.at(i));
-		  }
-		  _length_trj_prj_fv_neg = sqrt(std::inner_product(begin(delta_p12), end(delta_p12), begin(delta_p12), 0.0));
+		_length_trj_prj_fv = sqrt(std::inner_product(begin(delta_p12), end(delta_p12), begin(delta_p12), 0.0));
+	      }
+	      pt1.resize(3,0.0);
+	      pt2.resize(3,0.0);
+	      delta_p12.resize(3,0.0);
+	      if(intersection_trj_prj_fv_neg.size()>0){
+		pt1 = intersection_trj_prj_fv_neg[0];
+		for(size_t i = 0; i<3 ; i++){
+		  pt2[i] = trj.at(trj.size()-1).at(i);
+		  delta_p12.push_back(pt1.at(i)-pt2.at(i));
 		}
-		if(_length_trj_prj_fv+_length_trj_prj_fv_neg<100){
-		  _n_evt_paddle++;
-		  //std::cout<<_run<<" "<<_subrun<<" "<<_event<<std::endl;
-		  _tree->Fill();
-		}
+		_length_trj_prj_fv_neg = sqrt(std::inner_product(begin(delta_p12), end(delta_p12), begin(delta_p12), 0.0));
+	      }
+	      if(_length_trj_prj_fv+_length_trj_prj_fv_neg<100){
+		_n_evt_paddle++;
+		//std::cout<<_run<<" "<<_subrun<<" "<<_event<<std::endl;
+		_tree->Fill();
 	      }
 	    }
+	  }
 	    //_tree->Fill();
-	  }///Loop of Paddle Run data
-	}
+	}///Loop of Paddle Run data
       }
     }
+  
     /////////////////////////////////////////////////////
     /////////////Use Simulation Data/////////////////////
     /////////////////////////////////////////////////////
@@ -442,16 +440,17 @@ namespace larlite {
 	}
       }
       //Get Deviation
-      /*
+      
       if (_retrj.size()==1&&_mctrj.size()==1){
 
 	::larlite::GetDeviation GD;
 	GD.getdeviation(_retrj,_mctrj);
 	_mean       = GD.getmean();
-	_stdev      = GD.getstdev();
+	_w8devi     = GD.getw8devi();
+	_devi       = GD.getdevi();
 	_dist_start = GD.getdist_start();
-	
-	}*/
+	_devi_start = GD.getdevi_start();
+	}
       
       //MCQCluster
       if(_useMCQCluster){

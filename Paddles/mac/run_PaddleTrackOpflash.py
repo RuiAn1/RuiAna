@@ -33,8 +33,8 @@ my_unit2 = fmwk.TrackDeviation()
 #my_unit.UseData(True)
 my_unit.UseData(False)# Flase use simulation data
 
-my_unit.UseQCluster(True)# True use LightPath
-#my_unit.UseQCluster(False)# Flase use MCQCluster
+#my_unit.UseQCluster(True)# True use LightPath
+my_unit.UseQCluster(False)# Flase use MCQCluster
 
 my_unit2.UseRealData(False)#False use simulation data
 

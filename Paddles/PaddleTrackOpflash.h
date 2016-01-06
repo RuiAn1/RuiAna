@@ -142,10 +142,12 @@ namespace larlite {
     double _t_mcstart;
 
     double _dist_start;
+    double _devi_start;
     
     double _mean;
-    double _stdev;
-        
+    double _w8devi;
+    double _devi;
+    
     std::vector<double> _t_opflash;
     std::vector<double> _t_ophit;
     std::vector<double> _t_ophit_wrt;
