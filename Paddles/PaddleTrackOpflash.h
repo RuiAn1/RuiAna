@@ -80,8 +80,10 @@ namespace larlite {
     bool UseData       (bool use) {_useData       = use ; _useSimulation = !use; return  _useData;}
     bool UseQCluster   (bool use) {_useQCluster   = use ; _useMCQCluster = !use ;return  _useQCluster;}
     // getter function
-    std::vector<::geoalgo::Trajectory> Getretrj()      {return _retrj;}
-    std::vector<::geoalgo::Trajectory> Getmctrj()      {return _mctrj;}
+    std::vector<::geoalgo::Trajectory> Getretrj()      {return _retrj; }
+    std::vector<::geoalgo::Trajectory> Getmctrj()      {return _mctrj; }
+    double                             Getw8devi()     {return _w8devi;}
+    double                             Getdevi()       {return _devi;  }
     
   protected:
     
