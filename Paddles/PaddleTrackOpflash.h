@@ -80,10 +80,15 @@ namespace larlite {
     bool UseData       (bool use) {_useData       = use ; _useSimulation = !use; return  _useData;}
     bool UseQCluster   (bool use) {_useQCluster   = use ; _useMCQCluster = !use ;return  _useQCluster;}
     // getter function
-    std::vector<::geoalgo::Trajectory> Getretrj()      {return _retrj; }
-    std::vector<::geoalgo::Trajectory> Getmctrj()      {return _mctrj; }
-    double                             Getw8devi()     {return _w8devi;}
-    double                             Getdevi()       {return _devi;  }
+    std::vector<::geoalgo::Trajectory> Getretrj()       {return _retrj;       }
+    std::vector<::geoalgo::Trajectory> Getmctrj()       {return _mctrj;       }
+    double                             Getw8devi()      {return _w8devi;      }
+    double                             Getdevi()        {return _devi;        }
+    double                             GetSum_g4()      {return _pe_g4pho_sum;}
+    double                             GetSum_PL()      {return _pe_mchit_sum;}
+
+    // set the LP object to be used
+    void setLP(::flashana::LightPath lp) { LP = lp; } 
     
   protected:
     
@@ -121,8 +126,8 @@ namespace larlite {
     size_t _n_retrk_size , _n_retrk_size_tot;
     size_t _n_QClusters_size;
     size_t _n_QClusters_size_size;
-    
-    double _pe_g4pho_sum;
+
+    bool _n_intsec_mcj;
     
     double _retrk_start_x;
     double _retrk_start_y;
@@ -173,6 +178,7 @@ namespace larlite {
     double _theta;
     double _pe_mchit_sum;
     double _pe_ophit_sum;
+    double _pe_g4pho_sum;
     double _qratio_pl;
     double _qratio_re;
     
@@ -181,6 +187,7 @@ namespace larlite {
     
     ::geoalgo::GeoAlgo _geoAlgo;
     ::geoalgo::AABox _vfiducial;
+    ::geoalgo::AABox _vphotonlib;
     ::geoalgo::AABox _vmucs_top;
     ::geoalgo::AABox _vmucs_bottom;
     std::vector<::geoalgo::Trajectory> _retrj;

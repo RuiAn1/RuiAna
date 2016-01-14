@@ -33,14 +33,14 @@ namespace larlite {
     _tree->Branch("retrk_end_x",&_retrk_end_x,"_retrk_end_x/D");
     _tree->Branch("retrk_end_y",&_retrk_end_y,"_retrk_end_y/D");
     _tree->Branch("retrk_end_z",&_retrk_end_z,"_retrk_end_z/D");
-        
+    */
     _tree->Branch("mctrk_start_x",&_mctrk_start_x,"_mctrk_start_x/D");
     _tree->Branch("mctrk_start_y",&_mctrk_start_y,"_mctrk_start_y/D");
     _tree->Branch("mctrk_start_z",&_mctrk_start_z,"_mctrk_start_z/D");
     _tree->Branch("mctrk_end_x",&_mctrk_end_x,"_mctrk_end_x/D");
     _tree->Branch("mctrk_end_y",&_mctrk_end_y,"_mctrk_end_y/D");
     _tree->Branch("mctrk_end_z",&_mctrk_end_z,"_mctrk_end_z/D");
-    */
+    
     _tree->Branch("retrk_len_tot",&_retrk_len_tot,"_retrk_len_tot/D");
     _tree->Branch("mctrk_len_tot",&_mctrk_len_tot,"_mctrk_len_tot/D");
     _tree->Branch("n_mctrk_size_tot",&_n_mctrk_size_tot,"_n_mctrk_size_tot/S");
@@ -64,14 +64,17 @@ namespace larlite {
     _tree->Branch("ophit_amplitude","std::vector<double>",&_ophit_amplitude);
     _tree->Branch("pe_ophit","std::vector<double>",&_pe_ophit);
     _tree->Branch("pe_mchit","std::vector<double>",&_pe_mchit);
+
+    _tree->Branch("n_intsec_mcj",&_n_intsec_mcj,"_n_intsec_mcj/B");
     
     _length_xfiducial = larutil::Geometry::GetME()->DetHalfWidth();
     _length_yfiducial = larutil::Geometry::GetME()->DetHalfHeight();
     _length_zfiducial = larutil::Geometry::GetME()->DetLength();
     
-    _vfiducial = ::geoalgo::AABox(0, -_length_yfiducial, 0,
+    _vfiducial    = ::geoalgo::AABox(0, -_length_yfiducial, 0,
 				  2 * _length_xfiducial, _length_yfiducial,_length_zfiducial);
-    _vmucs_top = ::geoalgo::AABox(-71.795, 393.941, 531.45, -23.795, 398.451, 579.45);
+    _vphotonlib   = ::geoalgo::AABox(-62.2517,-190.427,-125.628,318.602,190.427,1162.63);
+    _vmucs_top    = ::geoalgo::AABox(-71.795, 393.941, 531.45, -23.795, 398.451, 579.45);
     //_vmucs_top = ::geoalgo::AABox(-271.795, 393.941, 331.45, 223.795, 398.451, 779.45);
     _vmucs_bottom = ::geoalgo::AABox(-19.6948, 316.041, 533.25, 28.3052, 320.551, 581.25);
     
@@ -231,8 +234,6 @@ namespace larlite {
 	    //5)Implement PhotonVisibility from OpT0Finder now
 	    //
 	    
-	    LP.TrackStart(true);
-	    LP.TrackEnd(true);
 	    tpc_obj = LP.FlashHypothesis(trj);
 	    
 	    /* for(size_t i=0;i<tpc_obj.size();i++){
@@ -378,6 +379,7 @@ namespace larlite {
       
       //g4 Photons
       for(size_t i = 0; i< ev_simpho->size(); i++)
+	//ev_simpho is a vector of 32 doubles corrsponding to PE#s on 32 PMT
 	{
 	  auto const& g4_pho = ev_simpho->at(i);
 	  _pe_g4pho_sum  = _pe_g4pho_sum +g4_pho.size();
@@ -402,14 +404,17 @@ namespace larlite {
 	  
 	  _mctrj.push_back(mctrj);
 	  
-	  _mc_e_dep = _mc_e_dep + mctrk.front().E()-mctrk.back().E();//Deposited energy
-          _mc_e     = ev_mct->at(0).front().E();
-	  _mctrk_start_x = mctrk.front().X();
+	  _mc_e_dep      = _mc_e_dep + mctrk.front().E()-mctrk.back().E();//Deposited energy
+	  _mc_e          = ev_mct->at(0).front().E()-105.7;
+	  _mctrk_start_x = mctrk.front().X();//front() and begin() here have same values
 	  _mctrk_start_y = mctrk.front().Y();
 	  _mctrk_start_z = mctrk.front().Z();
 	  _mctrk_end_x   = mctrk.back().X();
 	  _mctrk_end_y   = mctrk.back().Y();
-	  _mctrk_end_z   = mctrk.back().Z();
+	  _mctrk_end_z   = mctrk.back().Z();//.back() returns the last element
+	                                    //.end()  returns the iterator
+	                                    //(not an element) past-the-end of the vector
+
 	  _mctrk_len     = sqrt(pow((_mctrk_start_x-_mctrk_end_x),2)+
 				pow((_mctrk_start_y-_mctrk_end_y),2)+
 				pow((_mctrk_start_z-_mctrk_end_z),2));
@@ -420,7 +425,7 @@ namespace larlite {
       
       //Construct trajectory from reco track
       for(size_t i = 0; i <ev_reco->size(); i++ ){
-
+	
 	auto const& trk   = ev_reco->at(i);
 	
 	if(trk.NumberTrajectoryPoints() > 1){
@@ -437,8 +442,37 @@ namespace larlite {
 	  
 	  _retrj.push_back(retrj);
 	  
+	  if (_retrj[i].size()>0){
+	    _retrk_start_x = _retrj[i].front().at(0);
+	    _retrk_start_y = _retrj[i].front().at(1);
+	    _retrk_start_z = _retrj[i].front().at(2);
+	    _retrk_end_x   = _retrj[i].back().at(0);
+	    _retrk_end_y   = _retrj[i].back().at(1);
+	    _retrk_end_z   = _retrj[i].back().at(2);
+	    _retrk_len     = sqrt(pow((_retrk_start_x-_retrk_end_x),2)+
+				  pow((_retrk_start_y-_retrk_end_y),2)+
+				  pow((_retrk_start_z-_retrk_end_z),2));}
+	  
+	  _n_retrk_size_tot = _n_retrk_size_tot + _retrj[i].size();
+	  _retrk_len_tot    = _retrk_len_tot+_retrk_len;
+	  //std::cout<<i<<"th:"<<_retrk_len<<std::endl;
 	}
       }
+
+      //Analysis on energy deposition
+      
+      //std::cout<<"trj size: "<<_retrj.size()<<std::endl;
+      //std::cout<<"mcj  size: "<<_mctrj.size()<<std::endl;
+      //auto const& intersec_trj_vfidu = _geoAlgo.Intersection(_vfiducial,_retrj[0]);
+      _n_intsec_mcj = 0;
+
+      for(int i = 0; i<_mctrj.size();++i){
+	auto const& intersec_mcj_vfidu = _geoAlgo.Intersection(_vfiducial,_mctrj[i]);
+	//std::cout<<"intsec trj size: "<<intersec_trj_vfidu.size()<<std::endl;
+	//std::cout<<"intsec mc  size: "<<intersec_mcj_vfidu.size()<<std::endl;
+	if(intersec_mcj_vfidu.size()==1) _n_intsec_mcj++;
+      }
+
       //Get Deviation
       
       if (_retrj.size()==1&&_mctrj.size()==1){
@@ -466,18 +500,15 @@ namespace larlite {
 	  
 	  for(size_t i = 0; i<MCQ.QClusters().size();i++){
 	    
-	    ::geoalgo::Trajectory trj1;
+	    ::geoalgo::Trajectory trji;
 	    	    
 	    for (size_t pt = 0; pt<MCQ.QCluster(i).size();pt++){
 
-	      trj1.push_back(::geoalgo::Vector(MCQ.QCluster(i).at(pt).x, MCQ.QCluster(i).at(pt).y, MCQ.QCluster(i).at(pt).z));
+	      trji.push_back(::geoalgo::Vector(MCQ.QCluster(i).at(pt).x, MCQ.QCluster(i).at(pt).y, MCQ.QCluster(i).at(pt).z));
 	      
-	    }
-	    
-	    LP.TrackStart(false);
-            LP.TrackEnd(false);
-            
-	    tpc_obj_mc = LP.FlashHypothesis(trj1);
+	    }//x,y,z here are mid points on segment in mc track
+
+	    tpc_obj_mc = LP.FlashHypothesis(trji);
 	    //tpc_obj_mc = MCQ.QCluster(i);
 	    
 	    flash_obj.pe_v.resize(32,0.0);
@@ -492,9 +523,6 @@ namespace larlite {
 	
 	for(size_t i = 0; i <_retrj.size(); ++i ){
         
-	  LP.TrackStart(false);
-	  LP.TrackEnd(false);
-	  
 	  tpc_obj = LP.FlashHypothesis(_retrj[i]);
 	  
 	  flash_obj.pe_v.resize(32,0.0);
@@ -503,20 +531,6 @@ namespace larlite {
 	  std::transform(_pe_mchit.begin(), _pe_mchit.end(),flash_obj.pe_v.begin(), _pe_mchit.begin(),
 			 std::plus<double>());
 	  
-	  if (_retrj[i].size()>0){
-            _retrk_start_x = _retrj[i].front().at(0);
-            _retrk_start_y = _retrj[i].front().at(1);
-            _retrk_start_z = _retrj[i].front().at(2);
-            _retrk_end_x   = _retrj[i].back().at(0);
-            _retrk_end_y   = _retrj[i].back().at(1);
-            _retrk_end_z   = _retrj[i].back().at(2);
-            _retrk_len     = sqrt(pow((_retrk_start_x-_retrk_end_x),2)+
-                                  pow((_retrk_start_y-_retrk_end_y),2)+
-                                  pow((_retrk_start_z-_retrk_end_z),2));}
-	  	  
-	  _n_retrk_size_tot = _n_retrk_size_tot + _retrj[i].size();
-	  _retrk_len_tot    = _retrk_len_tot+_retrk_len;
-	  //std::cout<<i<<"th:"<<_retrk_len<<std::endl;
 	}
       }
       

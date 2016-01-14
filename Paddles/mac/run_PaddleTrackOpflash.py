@@ -11,6 +11,7 @@ if len(sys.argv) < 2:
     sys.exit(1)
 
 from larlite import larlite as fmwk
+from ROOT import flashana
 
 # Create ana_processor instance
 my_proc = fmwk.ana_processor()
@@ -27,14 +28,20 @@ my_proc.set_ana_output_file("PaddleTrackOpflash_output.root");
 
 # Attach an analysis unit ... here we use a base class which does nothing.
 # Replace with your analysis unit if you wish.
+LP = flashana.LightPath()
+LP.TrackStart(False)
+LP.TrackEnd(False)
+LP.PL_extension(True)
+LP.SetVolume()
 my_unit  = fmwk.PaddleTrackOpflash()
+my_unit.setLP(LP)
 my_unit2 = fmwk.TrackDeviation()
 
 #my_unit.UseData(True)
 my_unit.UseData(False)# Flase use simulation data
 
-#my_unit.UseQCluster(True)# True use LightPath
-my_unit.UseQCluster(False)# Flase use MCQCluster
+#my_unit.UseQCluster(True)# True use Recotrack(LightPath)
+my_unit.UseQCluster(False)# Flase use MCTrack(MCQCluster or LightPath)
 
 my_unit2.UseRealData(False)#False use simulation data
 
