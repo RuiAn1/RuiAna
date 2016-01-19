@@ -1,4 +1,4 @@
-import sys
+import sys,os
 
 from ROOT import *
 #gSystem.Load("libMy_Repo_scratch_area.so")
@@ -12,6 +12,7 @@ if len(sys.argv) < 2:
 
 from larlite import larlite as fmwk
 from ROOT import flashana
+from ROOT import fcllite
 
 # Create ana_processor instance
 my_proc = fmwk.ana_processor()
@@ -28,11 +29,14 @@ my_proc.set_ana_output_file("PaddleTrackOpflash_output.root");
 
 # Attach an analysis unit ... here we use a base class which does nothing.
 # Replace with your analysis unit if you wish.
+pset = fcllite.PSet("flashdsasdmatch.fcl")
 LP = flashana.LightPath()
 LP.TrackStart(False)
-LP.TrackEnd(False)
-LP.PL_extension(True)
+#LP.TrackEnd(True)
+#LP.PL_extension(True)
+LP.SetXOffset(0)
 LP.SetVolume()
+#LP.Configure(pset)
 my_unit  = fmwk.PaddleTrackOpflash()
 my_unit.setLP(LP)
 my_unit2 = fmwk.TrackDeviation()

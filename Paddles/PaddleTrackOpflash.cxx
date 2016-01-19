@@ -66,7 +66,7 @@ namespace larlite {
     _tree->Branch("pe_mchit","std::vector<double>",&_pe_mchit);
 
     _tree->Branch("n_intsec_mcj",&_n_intsec_mcj,"_n_intsec_mcj/B");
-    
+
     _length_xfiducial = larutil::Geometry::GetME()->DetHalfWidth();
     _length_yfiducial = larutil::Geometry::GetME()->DetHalfHeight();
     _length_zfiducial = larutil::Geometry::GetME()->DetLength();
@@ -508,6 +508,10 @@ namespace larlite {
 	      
 	    }//x,y,z here are mid points on segment in mc track
 
+	    if(_mc_e/2.3-_mctrk_len_tot>20){
+	      LP.TrackEnd(true);
+	      LP.PL_extension(true);
+	    }
 	    tpc_obj_mc = LP.FlashHypothesis(trji);
 	    //tpc_obj_mc = MCQ.QCluster(i);
 	    
