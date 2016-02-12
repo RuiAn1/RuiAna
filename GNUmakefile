@@ -1,3 +1,4 @@
+
 #####################################################################################
 #
 # A top Makefile for building my project.
@@ -20,7 +21,7 @@ endif
 #
 # Define directories to be compile upon a global "make"...
 #
-SUBDIRS := TrackAnalysis Paddles #ADD_NEW_SUBDIR ... do not remove this comment from this line
+SUBDIRS := TrackAnalysis HelloCryo Paddles TrackModeling #ADD_NEW_SUBDIR ... do not remove this comment from this line
 
 #####################################################################################
 #
@@ -36,7 +37,7 @@ all:
 # CLEANs...
 #
 clean:
-	@for i in $(SUBDIRS); do ( echo "" && echo "Cleaning $$i..." && cd $(LARLITE_USERDEVDIR)/ShiYan/$$i && $(MAKE) clean && rm -f $(LARLITE_LIBDIR)/$$i.* ) || exit $$?; done
+	@for i in $(SUBDIRS); do ( echo "" && echo "Cleaning $$i..." && cd $(LARLITE_USERDEVDIR)/RuiAna/$$i && $(MAKE) clean && rm -f $(LARLITE_LIBDIR)/$$i.* ) || exit $$?; done
 
 #####################################################################################
 #
@@ -44,13 +45,13 @@ clean:
 #
 doxygen:
 	@echo 'dOxygenising your code...'
-	@mkdir -p $(LARLITE_USERDEVDIR)/ShiYan/doc/dOxygenMyProject
-	@doxygen $(LARLITE_USERDEVDIR)/ShiYan/doc/doxygenMyProject.script
+	@mkdir -p $(LARLITE_USERDEVDIR)/RuiAna/doc/dOxygenMyProject
+	@doxygen $(LARLITE_USERDEVDIR)/RuiAna/doc/doxygenMyProject.script
 
 doxygen+:
 	@echo 'dOxygenising MyProject + local-ROOT...'
-	@mkdir -p $(LARLITE_USERDEVDIR)/ShiYan/doc/dOxygenMyProject+
-	@doxygen $(LARLITE_USERDEVDIR)/ShiYan/doc/doxygenMyProject+.script
+	@mkdir -p $(LARLITE_USERDEVDIR)/RuiAna/doc/dOxygenMyProject+
+	@doxygen $(LARLITE_USERDEVDIR)/RuiAna/doc/doxygenMyProject+.script
 #
 #####################################################################################
 #EOF
