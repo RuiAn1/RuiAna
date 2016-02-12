@@ -41,9 +41,13 @@ namespace larlite{
     double getmean()      {return _mean;}
     double getdevi()      {return _devi;}
     double getw8devi()    {return _w8devi;}
+    double getdevi_x()    {return _devi_x;}
+    double getdevi_y()    {return _devi_y;}
+    double getdevi_z()    {return _devi_z;}
     double getdist_start(){return _dist_start;}
     double getdevi_start(){return _devi_start;}
     double getlen_tot()   {return _len_tot;}
+    std::vector<double> getdist_start_xyz(){return _dist_start_xyz;}
     
   protected:
     ::geoalgo::GeoAlgo _geoAlgo;
@@ -54,6 +58,11 @@ namespace larlite{
     double _dist_start;
     double _devi_start;
     double _len_tot = 0;
+    double _devi_x;
+    double _devi_y;
+    double _devi_z;
+    std::vector<double> _dist_start_xyz;
+    
   };
 }
 #endif

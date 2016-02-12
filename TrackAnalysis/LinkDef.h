@@ -11,7 +11,10 @@
 
 #pragma link C++ class larlite::TrackDeviation+;
 #pragma link C++ class larlite::GetDeviation+;
+#pragma link C++ class larlite::GetLength+;
 //ADD_NEW_CLASS ... do not change this line
 #endif
+
+
 
 
