@@ -15,6 +15,7 @@ INCFLAGS  = -I.                       #Include itself
 INCFLAGS += $(shell larlite-config --includes)
 INCFLAGS += $(shell basictool-config --includes)
 INCFLAGS += $(shell seltool-config --includes)
+INCFLAGS += -I$(LARLITE_USERDEVDIR)/RuiAna
 
 # platform-specific options
 OSNAME          = $(shell uname -s)
