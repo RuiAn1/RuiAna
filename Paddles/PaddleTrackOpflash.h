@@ -16,12 +16,6 @@
 #define LARLITE_PADDLETRACKOPFLASH_H
 
 #include "Analysis/ana_base.h"
-#include "DataFormat/track.h"
-#include "DataFormat/ophit.h"
-#include "DataFormat/opflash.h"
-#include "DataFormat/mctrack.h"
-#include "DataFormat/calorimetry.h"
-#include "DataFormat/simphotons.h"
 #include "GeoAlgo/GeoAlgo.h"
 #include "LArUtil/Geometry.h"
 #include "TTree.h"
@@ -38,8 +32,9 @@
 #include "OpT0Finder/Algorithms/PhotonLibHypothesis.h"
 #include <numeric>
 #include "TH2.h"
-#include "../TrackAnalysis/GetDeviation.h"
-#include "../TrackAnalysis/TrackDeviation.h"
+#include "TrackAnalysis/GetDeviation.h"
+#include "TrackAnalysis/TrackDeviation.h"
+#include "TrackAnalysis/GetLength.h"
 
 namespace larlite {
   /**
@@ -149,11 +144,19 @@ namespace larlite {
     double _t_mcstart;
 
     double _dist_start;
+    double _dist_start_corr;
+    double _dist_end_corr;
     double _devi_start;
     
     double _mean;
     double _w8devi;
     double _devi;
+    double _devi_x;
+    double _devi_y;
+    double _devi_z;
+    double _dist_start_x;
+    double _dist_start_y;
+    double _dist_start_z;
     
     std::vector<double> _t_opflash;
     std::vector<double> _t_ophit;
@@ -185,6 +188,8 @@ namespace larlite {
     double _mc_e;
     double _mc_e_dep;
     
+    double _curvature;
+    int _count;
     ::geoalgo::GeoAlgo _geoAlgo;
     ::geoalgo::AABox _vfiducial;
     ::geoalgo::AABox _vphotonlib;
@@ -209,7 +214,8 @@ namespace larlite {
 
     ::flashana::QCluster_t tpc_obj_mc;
     ::flashana::MCQCluster MCQ;
-
+    
+    
   };
 }
 #endif

@@ -2,6 +2,12 @@
 #define LARLITE_PADDLETRACKOPFLASH_CXX
 
 #include "PaddleTrackOpflash.h"
+#include "DataFormat/track.h"
+#include "DataFormat/ophit.h"
+#include "DataFormat/opflash.h"
+#include "DataFormat/mctrack.h"
+#include "DataFormat/calorimetry.h"
+#include "DataFormat/simphotons.h"
 
 double multi (double x) {return x*.23;}
 
@@ -25,15 +31,24 @@ namespace larlite {
     _tree->Branch("mean",&_mean,"_mean/D");
     _tree->Branch("w8devi",&_w8devi,"_w8devi/D");
     _tree->Branch("devi",&_devi,"_devi/D");
-    _tree->Branch("dist_start",&_dist_start,"_dist_start/D");
+    _tree->Branch("devi_x",&_devi_x,"_devi_x/D");
+    _tree->Branch("devi_y",&_devi_y,"_devi_y/D");
+    _tree->Branch("devi_z",&_devi_z,"_devi_z/D");
+    _tree->Branch("dist_start",&_dist_start,"_dist_start/D");//w/o correction on reco track direction
+    _tree->Branch("dist_start_corr",&_dist_start_corr,"_dist_start_corr/D");
+    _tree->Branch("dist_end_corr",&_dist_end_corr,"_dist_end_corr/D");
     _tree->Branch("devi_start",&_devi_start,"_devi_start/D");
-    /*_tree->Branch("retrk_start_x",&_retrk_start_x,"_retrk_start_x/D");
+    _tree->Branch("dist_start_x",&_dist_start_x,"_dist_start_x/D");
+    _tree->Branch("dist_start_y",&_dist_start_y,"_dist_start_y/D");
+    _tree->Branch("dist_start_z",&_dist_start_z,"_dist_start_z/D");
+    _tree->Branch("curvature",&_curvature,"_curvature/D");
+    _tree->Branch("retrk_start_x",&_retrk_start_x,"_retrk_start_x/D");
     _tree->Branch("retrk_start_y",&_retrk_start_y,"_retrk_start_y/D");
     _tree->Branch("retrk_start_z",&_retrk_start_z,"_retrk_start_z/D");
     _tree->Branch("retrk_end_x",&_retrk_end_x,"_retrk_end_x/D");
     _tree->Branch("retrk_end_y",&_retrk_end_y,"_retrk_end_y/D");
     _tree->Branch("retrk_end_z",&_retrk_end_z,"_retrk_end_z/D");
-    */
+    
     _tree->Branch("mctrk_start_x",&_mctrk_start_x,"_mctrk_start_x/D");
     _tree->Branch("mctrk_start_y",&_mctrk_start_y,"_mctrk_start_y/D");
     _tree->Branch("mctrk_start_z",&_mctrk_start_z,"_mctrk_start_z/D");
@@ -66,7 +81,6 @@ namespace larlite {
     _tree->Branch("pe_mchit","std::vector<double>",&_pe_mchit);
 
     _tree->Branch("n_intsec_mcj",&_n_intsec_mcj,"_n_intsec_mcj/B");
-
     _length_xfiducial = larutil::Geometry::GetME()->DetHalfWidth();
     _length_yfiducial = larutil::Geometry::GetME()->DetHalfHeight();
     _length_zfiducial = larutil::Geometry::GetME()->DetLength();
@@ -83,6 +97,7 @@ namespace larlite {
     _n_evt        = 0;
     _n_evt_paddle = 0;
     _n_evt_mc     = 0;
+    _count        = 0;
     return true;
   }
   
@@ -104,8 +119,6 @@ namespace larlite {
     _mctrj.clear();
     _pe_mchit_sum  = 0;
     _pe_ophit_sum  = 0;
-    _retrk_len_tot = 0;
-    _mctrk_len_tot = 0;
     _n_mctrk_size_tot = 0;
     _n_retrk_size_tot = 0;
     _mc_e_dep      = 0;
@@ -316,7 +329,7 @@ namespace larlite {
     /////////////////////////////////////////////////////
     
     if(_useSimulation){
-      
+
       auto ev_reco = storage->get_data<event_track>("trackkalmanhit");
       //auto ev_reco = storage->get_data<event_track>("trackkalmanhitcc");
       //auto ev_reco = storage->get_data<event_track>("stitchkalmanhit");
@@ -346,10 +359,10 @@ namespace larlite {
       if (!ev_simpho){
 	std::cout<<"........Couldn't find sim photon data product in this event...... "<<std::endl;
       }
-      
+
       _n_mctrack   = ev_mct->size();
       _n_recotrack = ev_reco->size();
-      
+
       //reco ophit
       auto const& mctrk = ev_mct->at(0);
       double t = mctrk.front().T()/1000.;//Convert MC start time into us
@@ -385,6 +398,7 @@ namespace larlite {
 	  _pe_g4pho_sum  = _pe_g4pho_sum +g4_pho.size();
 	}
       
+
       //Construt trajectory from MC track
       for(size_t i = 0; i< ev_mct->size(); i++){
 	
@@ -415,14 +429,10 @@ namespace larlite {
 	                                    //.end()  returns the iterator
 	                                    //(not an element) past-the-end of the vector
 
-	  _mctrk_len     = sqrt(pow((_mctrk_start_x-_mctrk_end_x),2)+
-				pow((_mctrk_start_y-_mctrk_end_y),2)+
-				pow((_mctrk_start_z-_mctrk_end_z),2));
 	  _n_mctrk_size_tot  = _n_mctrk_size_tot+mctrk.size();
-	  _mctrk_len_tot     = _mctrk_len_tot +_mctrk_len;
+	
 	}
       }
-      
       //Construct trajectory from reco track
       for(size_t i = 0; i <ev_reco->size(); i++ ){
 	
@@ -443,19 +453,11 @@ namespace larlite {
 	  _retrj.push_back(retrj);
 	  
 	  if (_retrj[i].size()>0){
-	    _retrk_start_x = _retrj[i].front().at(0);
-	    _retrk_start_y = _retrj[i].front().at(1);
-	    _retrk_start_z = _retrj[i].front().at(2);
-	    _retrk_end_x   = _retrj[i].back().at(0);
-	    _retrk_end_y   = _retrj[i].back().at(1);
-	    _retrk_end_z   = _retrj[i].back().at(2);
-	    _retrk_len     = sqrt(pow((_retrk_start_x-_retrk_end_x),2)+
-				  pow((_retrk_start_y-_retrk_end_y),2)+
-				  pow((_retrk_start_z-_retrk_end_z),2));}
 	  
 	  _n_retrk_size_tot = _n_retrk_size_tot + _retrj[i].size();
-	  _retrk_len_tot    = _retrk_len_tot+_retrk_len;
-	  //std::cout<<i<<"th:"<<_retrk_len<<std::endl;
+
+	  
+	  }
 	}
       }
 
@@ -482,10 +484,59 @@ namespace larlite {
 	_mean       = GD.getmean();
 	_w8devi     = GD.getw8devi();
 	_devi       = GD.getdevi();
-	_dist_start = GD.getdist_start();
+	_dist_start = GD.getdist_start();//distance from MC start point to Reco start point, w/o direction correction
 	_devi_start = GD.getdevi_start();
+	_devi_x     = GD.getdevi_x();
+	_devi_y     = GD.getdevi_y();
+	_devi_z     = GD.getdevi_z();
+	_dist_start_x = GD.getdist_start_xyz().at(0);
+	_dist_start_y = GD.getdist_start_xyz().at(1);
+	_dist_start_z = GD.getdist_start_xyz().at(2); 
+	
+	::larlite::GetLength GL;
+	_mctrk_len_tot = GL.CalculateLength(_mctrj);
+	_retrk_len_tot = GL.CalculateLength(_retrj);
+	_retrk_start_x = GL.GetStartPoint(_retrj,_mctrj)[0];
+	_retrk_start_y = GL.GetStartPoint(_retrj,_mctrj)[1];
+	_retrk_start_z = GL.GetStartPoint(_retrj,_mctrj)[2];
+	_retrk_end_x   = GL.GetEndPoint(_retrj,_mctrj)[0];
+	_retrk_end_y   = GL.GetEndPoint(_retrj,_mctrj)[1];
+	_retrk_end_z   = GL.GetEndPoint(_retrj,_mctrj)[2];
+	_dist_start_corr = _mctrj[0].front().Dist(GL.GetStartPoint(_retrj,_mctrj));
+	_dist_end_corr   = _mctrj[0].back().Dist(GL.GetEndPoint(_retrj,_mctrj));
+
+	//7 cm curvature
+	if(_retrk_end_x != _retrj[0][0][0]){//right direction
+	  double lenth_last_pt_trace_back = 0;
+	  size_t ith = _retrj[0].size()-1;
+	  while(lenth_last_pt_trace_back < 7&& ith > 1){
+	    lenth_last_pt_trace_back += _retrj[0][ith].Dist(_retrj[0][ith-1]);
+	    --ith;
+	  }
+	  double staright_length_r = _retrj[0][_retrj[0].size()-1].Dist(_retrj[0][ith+1]);
+	  _curvature = staright_length_r / lenth_last_pt_trace_back;
+	  bool in_tpc = _vfiducial.Contain(_retrj[0].back());
+	  if (in_tpc){
+	    ++_count;
+	    _tree->Fill();}
 	}
-      
+
+	if(_retrk_end_x == _retrj[0][0][0]){//wrong direction
+	  double lenth_last_pt_trace_back = 0;
+	  size_t ith = 0;
+	  while(lenth_last_pt_trace_back < 7 && ith < _retrj[0].size()-1){
+	    lenth_last_pt_trace_back += _retrj[0][ith].Dist(_retrj[0][ith+1]);
+	    ++ith;
+	  }
+	  double staright_length_r = _retrj[0][0].Dist(_retrj[0][ith-1]);
+	  _curvature = staright_length_r / lenth_last_pt_trace_back;
+	  bool in_tpc = _vfiducial.Contain(_retrj[0].front());
+	  if (in_tpc){
+	    ++_count;
+	    _tree->Fill();}
+	}
+      }
+      /*
       //MCQCluster
       if(_useMCQCluster){
 	
@@ -509,9 +560,10 @@ namespace larlite {
 	    }//x,y,z here are mid points on segment in mc track
 
 	    if(_mc_e/2.3-_mctrk_len_tot>20){
-	      LP.TrackEnd(true);
-	      LP.PL_extension(true);
+	      //LP.TrackEnd(true);
+	      //LP.PL_extension(true);
 	    }
+
 	    tpc_obj_mc = LP.FlashHypothesis(trji);
 	    //tpc_obj_mc = MCQ.QCluster(i);
 	    
@@ -538,11 +590,11 @@ namespace larlite {
 	}
       }
       
-      //std::cout<<" tot:"<<_retrk_len_tot<<std::endl;
       /////Conclusion
       _pe_mchit_sum = std::accumulate(std::begin(_pe_mchit),std::end(_pe_mchit),0.0);
       _pe_ophit_sum = std::accumulate(std::begin(_pe_ophit),std::end(_pe_ophit),0.0);
-      _tree->Fill();
+      */
+      //_tree->Fill();
     }
     return true;
   }
@@ -570,7 +622,7 @@ namespace larlite {
       if(_fout){
         _fout->cd();
         if(_tree) _tree->Write();
-	std::cout<<"\n"<<_n_evt_mc<<" events found to be contained in Fiducial Volume of TPC of total evts "<<_n_evt<<std::endl;
+	std::cout<<"\n"<<_count<<" events found to be contained in Fiducial Volume of TPC of total evts "<<_n_evt<<std::endl;
 	
 	_v_pe_hist->Write();
 	
