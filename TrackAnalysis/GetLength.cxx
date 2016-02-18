@@ -37,9 +37,9 @@ namespace larlite{
     }
     return _length;
   }
-
+  
   ::geoalgo::Point_t GetLength::GetStartPoint (const std::vector<::geoalgo::Trajectory>& trjvec1 ,
-				    const std::vector<::geoalgo::Trajectory>& trjvec2 ){
+					       const std::vector<::geoalgo::Trajectory>& trjvec2 ){
     
     if (trjvec1.size()!=trjvec2.size()) printf("Dimensions of two input vectors are not equal");
     double dist_start_start;
@@ -53,7 +53,7 @@ namespace larlite{
 
 
   ::geoalgo::Point_t GetLength::GetEndPoint (const std::vector<::geoalgo::Trajectory>& trjvec1 ,
-				  const std::vector<::geoalgo::Trajectory>& trjvec2 ){
+					     const std::vector<::geoalgo::Trajectory>& trjvec2 ){
     
     if (trjvec1.size()!=trjvec2.size()) printf("Dimensions of two input vectors are not equal");
     double dist_end_start;
@@ -66,6 +66,39 @@ namespace larlite{
     return _end_pt;
   }
   
+  
+  
+  std::vector<double> GetLength::CalculateLengthFraction (std::vector<::geoalgo::Trajectory>& trjvec){
+    _length_frac.clear();
+    //_length_frac.resize(trjvec.size(),0.0);
+    //_length_frac[0] = 0.0;
+    //_length_frac.push_back(0.0);
+    _length = GetLength::CalculateLength(trjvec);
+    double length_at_this_pt = 0;
+    
+    ::geoalgo::Trajectory tmp_trj;
+    tmp_trj.clear();
+    if (_if_flip){
+      for(int i = trjvec[0].size()-1 ; i>-1 ; --i){
+	tmp_trj.push_back(trjvec[0][i]);
+      }
+      trjvec.clear();
+      trjvec.push_back(tmp_trj);
+    }
+        
+    for (size_t i = 0 ; i < trjvec.size() ; ++i ){
+      
+      if(trjvec[i].size() == 1) continue;
+      for (size_t pt = 1 ; pt<trjvec[i].size() ; ++pt){
+	
+	length_at_this_pt += trjvec[i][pt].Dist(trjvec[i][pt-1]);
+	
+	_length_frac.push_back(length_at_this_pt /_length); 
+	
+      }
+    }
+    return _length_frac;
+  }
   
   
 }

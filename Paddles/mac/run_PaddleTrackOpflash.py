@@ -29,25 +29,21 @@ my_proc.set_ana_output_file("PaddleTrackOpflash_output.root");
 
 # Attach an analysis unit ... here we use a base class which does nothing.
 # Replace with your analysis unit if you wish.
-pset = fcllite.PSet("flashdsasdmatch.fcl")
-LP = flashana.LightPath()
-LP.TrackStart(False)
-#LP.TrackEnd(True)
-#LP.PL_extension(True)
-LP.SetXOffset(0)
-LP.SetVolume()
+#pset = fcllite.PSet("flashdsasdmatch.fcl")
+#LP = flashana.LightPath()
 #LP.Configure(pset)
+
 my_unit  = fmwk.PaddleTrackOpflash()
-my_unit.setLP(LP)
-my_unit2 = fmwk.TrackDeviation()
+#my_unit.setLP(LP)
+#my_unit2 = fmwk.TrackDeviation()
 
 #my_unit.UseData(True)
 my_unit.UseData(False)# Flase use simulation data
 
-#my_unit.UseQCluster(True)# True use Recotrack(LightPath)
-my_unit.UseQCluster(False)# Flase use MCTrack(MCQCluster or LightPath)
+my_unit.UseQCluster(True)# True use Recotrack(LightPath)
+#my_unit.UseQCluster(False)# Flase use MCTrack(MCQCluster or LightPath)
 
-my_unit2.UseRealData(False)#False use simulation data
+#my_unit2.UseRealData(False)#False use simulation data
 
 #my_unit.SetSaveHistos()
 my_proc.add_process(my_unit)

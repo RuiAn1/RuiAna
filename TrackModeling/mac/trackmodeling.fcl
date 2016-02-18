@@ -11,9 +11,11 @@ TrackModeling: {
   XMin: -30.
   XMax: 270.
   Producer: trackkalmanhit
+  #Producer: recoemu
   HitBoth: false
   MinTrackLength: 200
   ScanLength: 5
   SegmentLength: 5
   AllowFlip: true
+  UseAbsDevi: true
 }

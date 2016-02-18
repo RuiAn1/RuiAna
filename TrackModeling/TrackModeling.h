@@ -78,9 +78,14 @@ namespace larlite {
     ::geoalgo::GeoAlgo _geoAlgo;
     
     bool _configured;
+    bool _use_abs_devi;
     std::string _producer;
 
     TTree* _tree;
+    
+    bool _if_flip;
+    bool _allow_flip;
+    
     int _n_evt;
     int _n_mctrack;
     int _n_recotrack;
@@ -111,6 +116,7 @@ namespace larlite {
     double _mctrk_len_tot;
     double _t_mcstart;
     
+    std::vector<double> _length_frac;
     
     double _mean;
     double _w8devi;
@@ -128,6 +134,9 @@ namespace larlite {
     double _curvature;
     
     ::geoalgo::AABox _active_volume;
+    std::vector<double> _devi_x_array;
+    std::vector<double> _devi_y_array;
+    std::vector<double> _devi_z_array;
     std::vector<::geoalgo::Trajectory> _retrj;
     std::vector<::geoalgo::Trajectory> _mctrj;
   };

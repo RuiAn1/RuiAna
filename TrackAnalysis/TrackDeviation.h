@@ -17,16 +17,7 @@
 
 #include "Analysis/ana_base.h"
 #include "DataFormat/track.h"
-#include "DataFormat/ophit.h"
-#include "DataFormat/opflash.h"
 #include "DataFormat/mctrack.h"
-#include "DataFormat/calorimetry.h"
-#include "DataFormat/simphotons.h"
-#include "OpT0Finder/Base/FlashMatchManager.h"
-#include "OpT0Finder/Algorithms/LightPath.h"
-#include "OpT0Finder/App/MCQCluster.h"
-#include "OpT0Finder/PhotonLibrary/PhotonVisibilityService.h"
-#include "OpT0Finder/Algorithms/PhotonLibHypothesis.h"
 #include "GeoAlgo/GeoAlgo.h"
 #include "LArUtil/Geometry.h"
 #include "TTree.h"
@@ -100,7 +91,6 @@ namespace larlite {
 
     std::vector<::geoalgo::Trajectory> _retrj;
     std::vector<::geoalgo::Trajectory> _mctrj;
-    
     
   };
 }

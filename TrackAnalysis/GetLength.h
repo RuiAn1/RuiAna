@@ -37,15 +37,22 @@ namespace larlite{
     
     double CalculateLength (const std::vector<::geoalgo::Trajectory>& trjvec);
     
+    std::vector<double> CalculateLengthFraction (std::vector<::geoalgo::Trajectory>& trjvec);
+    
     ::geoalgo::Point_t GetStartPoint (const std::vector<::geoalgo::Trajectory>& trjvec1 ,
-			   const std::vector<::geoalgo::Trajectory>& trjvec2 );
-
+				      const std::vector<::geoalgo::Trajectory>& trjvec2 );
+    
     ::geoalgo::Point_t GetEndPoint (const std::vector<::geoalgo::Trajectory>& trjvec1 ,
-			 const std::vector<::geoalgo::Trajectory>& trjvec2 );
+				    const std::vector<::geoalgo::Trajectory>& trjvec2 );
+    ///Setter function
+    bool set_if_flip(bool if_){_if_flip = if_; return _if_flip;}
+
     
     
   protected:
     ::geoalgo::GeoAlgo _geoAlgo;
+
+    bool _if_flip = false;
     
     double _length;
     ::geoalgo::Point_t _start_pt;
@@ -54,7 +61,7 @@ namespace larlite{
     double _length_xfiducial;
     double _length_yfiducial;
     double _length_zfiducial; 
-
+    std::vector<double> _length_frac;
     
   };
 }

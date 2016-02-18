@@ -34,6 +34,10 @@ namespace larlite {
 
     _producer = main_cfg.get<std::string>("Producer","trackkalmanhit");
 
+    _allow_flip = main_cfg.get<bool>("AllowFlip","false");
+    
+    _use_abs_devi = main_cfg.get<bool>("UseAbsDevi","false");
+    
     _configured =true;
   }
   //=====Initialize
@@ -96,6 +100,11 @@ namespace larlite {
     _tree->Branch("retrk_len_tot",&_retrk_len_tot,"_retrk_len_tot/D");
     _tree->Branch("mctrk_len_tot",&_mctrk_len_tot,"_mctrk_len_tot/D");
 
+    _tree->Branch("length_frac","std::vector<double>",&_length_frac);
+    _tree->Branch("devi_x_array","std::vector<double>",&_devi_x_array);
+    _tree->Branch("devi_y_array","std::vector<double>",&_devi_y_array);
+    _tree->Branch("devi_z_array","std::vector<double>",&_devi_z_array);
+    
     _count = 0;
     _n_evt = 0;
     
@@ -123,6 +132,7 @@ namespace larlite {
     ++_n_evt;
     _retrj.clear();
     _mctrj.clear();
+    _length_frac.clear();
     _n_mctrk_size_tot = 0;
     _n_retrk_size_tot = 0;
     _mc_e_dep         = 0;
@@ -210,10 +220,11 @@ namespace larlite {
     ////Users should modifiy to work for other cases/////////////////////
     /////////////////////////////////////////////////////////////////////
     
-    if (_retrj.size()==1&&_mctrj.size()==1){
-
+    if (_retrj.size()==1&&_mctrj.size()==1 && _mctrj[0].size() > 0 && _retrj[0].size() > 0 ){
       ::larlite::GetDeviation GD;
       GD.getdeviation(_retrj,_mctrj);
+      GD.setuse_abs_devi(_use_abs_devi);
+      _if_flip    = GD.get_if_flip();
       _mean       = GD.getmean();
       _w8devi     = GD.getw8devi();
       _devi       = GD.getdevi();
@@ -225,21 +236,33 @@ namespace larlite {
       _dist_start_x = GD.getdist_start_xyz().at(0);
       _dist_start_y = GD.getdist_start_xyz().at(1);
       _dist_start_z = GD.getdist_start_xyz().at(2);
-
+      _devi_x_array = GD.getdevi_x_array();
+      _devi_y_array = GD.getdevi_y_array();
+      _devi_z_array = GD.getdevi_z_array();
+      
       ::larlite::GetLength GL;
-      _mctrk_len_tot = GL.CalculateLength(_mctrj);
-      _retrk_len_tot = GL.CalculateLength(_retrj);
-      _retrk_start_x = GL.GetStartPoint(_retrj,_mctrj)[0];
-      _retrk_start_y = GL.GetStartPoint(_retrj,_mctrj)[1];
-      _retrk_start_z = GL.GetStartPoint(_retrj,_mctrj)[2];
-      _retrk_end_x   = GL.GetEndPoint(_retrj,_mctrj)[0];
-      _retrk_end_y   = GL.GetEndPoint(_retrj,_mctrj)[1];
-      _retrk_end_z   = GL.GetEndPoint(_retrj,_mctrj)[2];
+      if (_allow_flip) GL.set_if_flip(_if_flip);
+      _mctrk_len_tot   = GL.CalculateLength(_mctrj);
+      _retrk_len_tot   = GL.CalculateLength(_retrj);
+      _retrk_start_x   = GL.GetStartPoint(_retrj,_mctrj)[0];
+      _retrk_start_y   = GL.GetStartPoint(_retrj,_mctrj)[1];
+      _retrk_start_z   = GL.GetStartPoint(_retrj,_mctrj)[2];
+      _retrk_end_x     = GL.GetEndPoint(_retrj,_mctrj)[0];
+      _retrk_end_y     = GL.GetEndPoint(_retrj,_mctrj)[1];
+      _retrk_end_z     = GL.GetEndPoint(_retrj,_mctrj)[2];
       _dist_start_corr = _mctrj[0].front().Dist(GL.GetStartPoint(_retrj,_mctrj));
       _dist_end_corr   = _mctrj[0].back().Dist(GL.GetEndPoint(_retrj,_mctrj));
+      _length_frac     = GL.CalculateLengthFraction(_retrj);
 
+      /*std::cout<<"============"
+	       <<"size of _retrj[0] is    "<<_retrj[0].size()<<"\n"
+	       <<"size of _length_frac is "<<_length_frac.size()<<"\n"
+	       <<"size of devi_x_arrat is "<<_devi_x_array.size()<<"\n"
+	       <<"size of devi_y_arrat is "<<_devi_y_array.size()<<"\n"
+	       <<"size of devi_z_arrat is "<<_devi_z_array.size()<<"\n"<<std::endl;
+      */
       //Curvature within 7cm near the track end
-      if(_retrk_end_x != _retrj[0][0][0]){//right direction
+      if(_retrk_end_x != _retrj[0][0][0]&&_retrj[0].size()>2){//right direction
 	double lenth_last_pt_trace_back = 0;
 	size_t ith = _retrj[0].size()-1;
 	while(lenth_last_pt_trace_back < 7&& ith > 1){
@@ -251,10 +274,11 @@ namespace larlite {
 	bool in_tpc = _active_volume.Contain(_retrj[0].back());
 	if (in_tpc){
 	  ++_count;
-	  _tree->Fill();}
+	  _tree->Fill();
+	}
       }
 
-      if(_retrk_end_x == _retrj[0][0][0]){//Flip the track if wrong direction
+      if(_retrk_end_x == _retrj[0][0][0]&&_retrj[0].size()>1){//Flip the track if wrong direction
 	double lenth_last_pt_trace_back = 0;
 	size_t ith = 0;
 	while(lenth_last_pt_trace_back < 7 && ith < _retrj[0].size()-1){
@@ -266,11 +290,10 @@ namespace larlite {
 	bool in_tpc = _active_volume.Contain(_retrj[0].front());
 	if (in_tpc){
 	  ++_count;
-	  _tree->Fill();}
+	  _tree->Fill();
+	}
       }
     }
-    
-    
     
     return true;
   }

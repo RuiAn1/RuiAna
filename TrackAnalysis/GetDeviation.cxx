@@ -4,21 +4,27 @@
 #include "GetDeviation.h"
 
 namespace larlite{
-  double GetDeviation::getdist(const ::geoalgo::Vector& pt_1 ,
-			     const ::geoalgo::Vector& pt_2 )
-  {
-    _dist = pt_1.Dist(pt_2);
-    return _dist;
-  }
-  
+
   void GetDeviation::getdeviation ( const std::vector<::geoalgo::Trajectory>& trjvec1 , 
-				    const std::vector<::geoalgo::Trajectory>& trjvec2 )
+				     std::vector<::geoalgo::Trajectory>& trjvec2 )
   {
     for (size_t n = 0 ; n<trjvec1.size() ; n++){
 
+      if(trjvec1.size()==0 ||trjvec2.size()==0)
+	printf("One of the track obj has size 0");
+      
       auto const& pt1 = trjvec1[0][0];
       auto const& pt2 = trjvec2[0][0];
-      GetDeviation::getdist(pt1,pt2);
+      auto const& ptend2 = trjvec2[0].back();
+
+      double dist_1front_2front = pt1.Dist(pt2);
+      double dist_1front_2back  = pt1.Dist(ptend2);
+      
+      ::geoalgo::Trajectory tmp_trj2;
+      
+      if(dist_1front_2front>dist_1front_2back)_if_flip = true;
+	      
+      _dist = pt1.Dist(pt2);
       /*
 	if the start points distance is larger than 10 cm, 
 	possibly the track is reconstructed in the wrong direction
@@ -40,6 +46,9 @@ namespace larlite{
       std::vector<double> devis_x;
       std::vector<double> devis_y;
       std::vector<double> devis_z;
+      std::vector<double> devis_x_abs;
+      std::vector<double> devis_y_abs;
+      std::vector<double> devis_z_abs;
       std::vector<double> weights;
       std::vector<double> weighted_devis;
       devis.clear();
@@ -61,7 +70,7 @@ namespace larlite{
       for (size_t i=0; i<trjvec1[n].size()-1 ; ++i){
 	auto const& pt1 = trjvec1[n][i];
 	auto const& pt2 = trjvec1[n][i+1];
-	GetDeviation::getdist(pt1,pt2);//calculate _dist btw pt1 and pt2
+	_dist = pt1.Dist(pt2);
 	_len_tot += _dist;
 	weights.push_back(_dist);
 	auto const& line1 = ::geoalgo::LineSegment(pt1, pt2);
@@ -84,6 +93,13 @@ namespace larlite{
 	devis_x.push_back(_dist*(pt3[0]-pt4[0]));
 	devis_y.push_back(_dist*(pt3[1]-pt4[1]));
 	devis_z.push_back(_dist*(pt3[2]-pt4[2]));
+
+	devis_x_abs.push_back(std::abs(_dist*(pt3[0]-pt4[0])));
+	devis_y_abs.push_back(std::abs(_dist*(pt3[1]-pt4[1])));
+	devis_z_abs.push_back(std::abs(_dist*(pt3[2]-pt4[2])));
+	
+
+
 	weighted_devis.push_back(_dist*devi);
       }
       /*std::cout<<"########################\n";
@@ -100,7 +116,16 @@ namespace larlite{
 	std::bind2nd(std::minus<double>(), 0.0));
 	double sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
       */
-      
+      if(_if_use_abs_devi){
+	_devi_x_array = devis_x_abs;
+	_devi_y_array = devis_y_abs;
+	_devi_z_array = devis_z_abs;
+      }
+      else{
+	_devi_x_array = devis_x;
+	_devi_y_array = devis_y;
+	_devi_z_array = devis_z;
+      }
       double weighted_sum = 0;
       double devi_sum = 0;
       devi_sum = std::accumulate(std::begin(devis),std::end(devis),0.0);
