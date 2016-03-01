@@ -21,7 +21,7 @@ endif
 #
 # Define directories to be compile upon a global "make"...
 #
-SUBDIRS := TrackAnalysis HelloCryo Paddles TrackModeling #ADD_NEW_SUBDIR ... do not remove this comment from this line
+SUBDIRS := TrackAnalysis HelloCryo Paddles TrackModeling Pi0Trial CCInclusiveTrigger #ADD_NEW_SUBDIR ... do not remove this comment from this line
 
 #####################################################################################
 #
