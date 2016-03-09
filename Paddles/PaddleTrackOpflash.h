@@ -184,6 +184,11 @@ namespace larlite {
     double _pe_g4pho_sum;
     double _qratio_pl;
     double _qratio_re;
+
+    std::vector<double> _g4_t;
+    std::vector<double> _g4_end_x;
+    std::vector<double> _g4_end_y;
+    std::vector<double> _g4_end_z;
     
     double _mc_e;
     double _mc_e_dep;

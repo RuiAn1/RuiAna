@@ -81,6 +81,12 @@ namespace larlite {
     _tree->Branch("pe_mchit","std::vector<double>",&_pe_mchit);
 
     _tree->Branch("n_intsec_mcj",&_n_intsec_mcj,"_n_intsec_mcj/B");
+
+    _tree -> Branch("g4_t","std::vector<double>",&_g4_t);
+    _tree -> Branch("g4_endx","std::vector<double>",&_g4_end_x);
+    _tree -> Branch("g4_endy","std::vector<double>",&_g4_end_y);
+    _tree -> Branch("g4_endz","std::vector<double>",&_g4_end_z);
+
     _length_xfiducial = larutil::Geometry::GetME()->DetHalfWidth();
     _length_yfiducial = larutil::Geometry::GetME()->DetHalfHeight();
     _length_zfiducial = larutil::Geometry::GetME()->DetLength();
@@ -364,8 +370,11 @@ namespace larlite {
       _n_recotrack = ev_reco->size();
 
       //reco ophit
-      auto const& mctrk = ev_mct->at(0);
-      double t = mctrk.front().T()/1000.;//Convert MC start time into us
+      double t = 0 ;
+      if (ev_mct->size()){
+	auto const& mctrk = ev_mct->at(0);
+	t = mctrk.front().T()/1000.;//Convert MC start time into us
+      }
       _t_mcstart = t;
       
       for(size_t oph = 0; oph < ev_ophit->size(); oph++)
@@ -391,11 +400,29 @@ namespace larlite {
 	}
       
       //g4 Photons
+
+      _g4_t.clear();
+      _g4_end_x.clear();
+      _g4_end_y.clear();
+      _g4_end_z.clear();
+      
       for(size_t i = 0; i< ev_simpho->size(); i++)
 	//ev_simpho is a vector of 32 doubles corrsponding to PE#s on 32 PMT
 	{
 	  auto const& g4_pho = ev_simpho->at(i);
 	  _pe_g4pho_sum  = _pe_g4pho_sum +g4_pho.size();
+	  for (size_t j=0; j<g4_pho.size(); ++j){
+	    auto g4t = g4_pho.at(j).Time;
+	    auto lastlocal = g4_pho.at(j).FinalLocalPosition;
+	    auto statposi  = g4_pho.at(j).InitialPosition;
+	    //std::cout<<statposi.x();
+	    //std::cout<<lastlocal.x();
+	    _g4_t.push_back(g4t);
+	    _g4_end_x.push_back(statposi.x());
+	    _g4_end_y.push_back(statposi.y());
+	    _g4_end_z.push_back(statposi.z());
+	  }
+	  
 	}
       
 

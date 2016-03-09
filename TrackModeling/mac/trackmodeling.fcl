@@ -10,8 +10,8 @@ TrackModeling: {
 
   XMin: -30.
   XMax: 270.
-  Producer: trackkalmanhit
-  #Producer: recoemu
+  #Producer: trackkalmanhit
+  Producer: recoemu
   HitBoth: false
   MinTrackLength: 200
   ScanLength: 5
