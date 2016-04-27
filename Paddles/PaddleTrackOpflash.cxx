@@ -70,6 +70,7 @@ namespace larlite {
     _tree->Branch("pe_ophit_sum",&_pe_ophit_sum,"_pe_ophit_sum/D");
     _tree->Branch("mc_e",&_mc_e,"_mc_e/D");
     _tree->Branch("mc_e_dep",&_mc_e_dep,"_mc_e_dep/D");
+    _tree->Branch("max_flash_pe",&_max_flash_pe,"_max_flash_pe/D");
     _tree->Branch("pe_g4pho_sum",&_pe_g4pho_sum,"_pe_g4pho_sum/D");
     
     _tree->Branch("t_opflash","std::vector<double>",&_t_opflash);
@@ -87,6 +88,8 @@ namespace larlite {
     _tree -> Branch("g4_endy","std::vector<double>",&_g4_end_y);
     _tree -> Branch("g4_endz","std::vector<double>",&_g4_end_z);
 
+    _tree -> Branch("_totalpe_opflash",&_totalpe_opflash,"totalpe_opflash/D");
+    
     _length_xfiducial = larutil::Geometry::GetME()->DetHalfWidth();
     _length_yfiducial = larutil::Geometry::GetME()->DetHalfHeight();
     _length_zfiducial = larutil::Geometry::GetME()->DetLength();
@@ -129,7 +132,7 @@ namespace larlite {
     _n_retrk_size_tot = 0;
     _mc_e_dep      = 0;
     _pe_g4pho_sum  = 0;
-    
+    _totalpe_opflash = 0;
     
     std::fill(_pe_ophit.begin(), _pe_ophit.end(), 0);
 
@@ -261,7 +264,7 @@ namespace larlite {
 	    flash_obj.pe_v.resize(32,0.0);
 	    PL.FillEstimate(tpc_obj,flash_obj);
 	    _pe_mchit =  flash_obj.pe_v;
-	    //for(size_t i = 0; i<32;i++)std::cout<<flash_obj.pe_v.at(i);
+	    for(size_t i = 0; i<32;i++)std::cout<<flash_obj.pe_v.at(i);
 	    
 	    // Normalize
 	    
@@ -356,10 +359,15 @@ namespace larlite {
 	std::cout<<"........Couldn't find mcshower data product in this event...... "<<std::endl;
       }
       
-      auto ev_ophit = storage->get_data<event_ophit>("opflash");
+      auto ev_ophit = storage->get_data<event_ophit>("opflashSat");
       if (!ev_ophit) {
 	std::cout<<"........Couldn't find ophit data product in this event...... "<<std::endl;
       }
+
+      auto ev_opflash = storage->get_data<event_opflash>("opflashSat");
+      if (!ev_ophit) {
+	std::cout<<"........Couldn't find opflash data product in this event...... "<<std::endl;
+      }      
       
       auto ev_simpho = storage->get_data<event_simphotons>("largeant");
       if (!ev_simpho){
@@ -376,11 +384,20 @@ namespace larlite {
 	t = mctrk.front().T()/1000.;//Convert MC start time into us
       }
       _t_mcstart = t;
+      _max_flash_pe = 0.;
+
+      //wocao
       
-      for(size_t oph = 0; oph < ev_ophit->size(); oph++)
+      for(size_t opf = 0; opf <ev_opflash->size();++opf){
+	auto const& opflash = ev_opflash->at(opf);
+	_totalpe_opflash += opflash.TotalPE();
+	if (_max_flash_pe < opflash.TotalPE()) _max_flash_pe = opflash.TotalPE();
+      }
+      
+      for(size_t oph = 0; oph < ev_ophit->size(); ++oph)
 	{
 	  auto const& ophit = ev_ophit->at(oph);
-	  
+
 	  _t_ophit.push_back(ophit.PeakTime());
 	  _t_ophit_wrt.push_back(ophit.PeakTime()-t);
 	
@@ -425,7 +442,7 @@ namespace larlite {
 	  
 	}
       
-
+      
       //Construt trajectory from MC track
       for(size_t i = 0; i< ev_mct->size(); i++){
 	
@@ -460,6 +477,7 @@ namespace larlite {
 	
 	}
       }
+      
       //Construct trajectory from reco track
       for(size_t i = 0; i <ev_reco->size(); i++ ){
 	
@@ -504,7 +522,7 @@ namespace larlite {
 
       //Get Deviation
       
-      if (_retrj.size()==1&&_mctrj.size()==1){
+      /*if (_retrj.size()==1&&_mctrj.size()==1&&_retrj[0].size()>1&&_mctrj[0].size()>1){
 
 	::larlite::GetDeviation GD;
 	GD.getdeviation(_retrj,_mctrj);
@@ -531,7 +549,7 @@ namespace larlite {
 	_retrk_end_z   = GL.GetEndPoint(_retrj,_mctrj)[2];
 	_dist_start_corr = _mctrj[0].front().Dist(GL.GetStartPoint(_retrj,_mctrj));
 	_dist_end_corr   = _mctrj[0].back().Dist(GL.GetEndPoint(_retrj,_mctrj));
-
+	
 	//7 cm curvature
 	if(_retrk_end_x != _retrj[0][0][0]){//right direction
 	  double lenth_last_pt_trace_back = 0;
@@ -560,10 +578,11 @@ namespace larlite {
 	  bool in_tpc = _vfiducial.Contain(_retrj[0].front());
 	  if (in_tpc){
 	    ++_count;
-	    _tree->Fill();}
+	    //_tree->Fill();
+	  }
 	}
-      }
-      /*
+      }*/
+
       //MCQCluster
       if(_useMCQCluster){
 	
@@ -605,23 +624,24 @@ namespace larlite {
       if(_useQCluster){
 	
 	for(size_t i = 0; i <_retrj.size(); ++i ){
-        
-	  tpc_obj = LP.FlashHypothesis(_retrj[i]);
-	  
-	  flash_obj.pe_v.resize(32,0.0);
-	  PL.FillEstimate(tpc_obj,flash_obj);
-	  
-	  std::transform(_pe_mchit.begin(), _pe_mchit.end(),flash_obj.pe_v.begin(), _pe_mchit.begin(),
+
+	  if(_retrj[i].size()>1){
+	    tpc_obj = LP.FlashHypothesis(_retrj[i]);
+	    
+	    flash_obj.pe_v.resize(32,0.0);
+	    PL.FillEstimate(tpc_obj,flash_obj);
+	    
+	    std::transform(_pe_mchit.begin(), _pe_mchit.end(),flash_obj.pe_v.begin(), _pe_mchit.begin(),
 			 std::plus<double>());
-	  
+	  }
 	}
       }
       
       /////Conclusion
       _pe_mchit_sum = std::accumulate(std::begin(_pe_mchit),std::end(_pe_mchit),0.0);
       _pe_ophit_sum = std::accumulate(std::begin(_pe_ophit),std::end(_pe_ophit),0.0);
-      */
-      //_tree->Fill();
+
+      _tree->Fill();
     }
     return true;
   }

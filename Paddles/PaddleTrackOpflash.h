@@ -192,8 +192,11 @@ namespace larlite {
     
     double _mc_e;
     double _mc_e_dep;
+
+    double _max_flash_pe;
     
     double _curvature;
+    double _totalpe_opflash;
     int _count;
     ::geoalgo::GeoAlgo _geoAlgo;
     ::geoalgo::AABox _vfiducial;
