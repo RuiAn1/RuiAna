@@ -46,12 +46,14 @@ namespace larlite {
   public:
 
     /// Default constructor
-    PaddleTrackOpflash()
+    /*PaddleTrackOpflash()
       :_tree(nullptr)
       { _name="PaddleTrackOpflash";
 	_v_pe_hist = 0;
 	_fout=0;
-      }
+	}*/
+
+    PaddleTrackOpflash();
 
     /// Default destructor
     virtual ~PaddleTrackOpflash(){}
@@ -71,9 +73,8 @@ namespace larlite {
     */
     virtual bool finalize();
 
-    // setter function
-    bool UseData       (bool use) {_useData       = use ; _useSimulation = !use; return  _useData;}
-    bool UseQCluster   (bool use) {_useQCluster   = use ; _useMCQCluster = !use ;return  _useQCluster;}
+    void configure(const std::string config_file);
+    
     // getter function
     std::vector<::geoalgo::Trajectory> Getretrj()       {return _retrj;       }
     std::vector<::geoalgo::Trajectory> Getmctrj()       {return _mctrj;       }
@@ -88,17 +89,22 @@ namespace larlite {
   protected:
     
     TTree* _tree;
-    TH1F* _pe_dis_hist;
-    TH2F* _v_pe_hist;
-   
+    TH1F* _hRatioPLOP;
+    TH2F* _hRatioMap;
+    
     std::ofstream _track_positions;
     
+    std::string _mc_producer;
+    std::string _g4_producer;
+    std::string _track_producer;
+    std::string _ophit_producer;
+    std::string _opflash_producer;
+    
     bool _save_histos;
-    bool _useData;
-    bool _useSimulation;
-    bool _useMCQCluster;
-    bool _useQCluster;
-
+    bool _ifusedata;
+    bool _ifuselightpath;
+    bool _configured;
+    
     size_t _n_ev_reco;
     
     int _run;

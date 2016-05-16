@@ -8,16 +8,54 @@
 #include "DataFormat/mctrack.h"
 #include "DataFormat/calorimetry.h"
 #include "DataFormat/simphotons.h"
+#include "FhiclLite/ConfigManager.h"
 
 double multi (double x) {return x*.23;}
 
 namespace larlite {
+
+  PaddleTrackOpflash::PaddleTrackOpflash()
+    : ana_base()
+  {
+    _name       = "PaddleTrackOpflash";
+    _tree       = nullptr;
+    _configured = false;
+    _fout       = 0;
+  }
+
+  
+  void PaddleTrackOpflash::configure(const std::string config_file){
+
+    ::fcllite::ConfigManager cfg_mgr(_name);
+
+    cfg_mgr.AddCfgFile(config_file);
+
+    auto const& main_cfg = cfg_mgr.Config().get_pset(_name);
+    
+    _ifusedata        = main_cfg.get<bool>("IfUseData");
+    _ifuselightpath   = main_cfg.get<bool>("IfUseLightPath");
+    _mc_producer      = main_cfg.get<std::string>("MCProducer");
+    _g4_producer      = main_cfg.get<std::string>("G4Producer");
+    _track_producer   = main_cfg.get<std::string>("TrackProducer");
+    _ophit_producer   = main_cfg.get<std::string>("OphitProducer");
+    _opflash_producer = main_cfg.get<std::string>("OpflashProducer");
+
+    _configured = true;
+  }
+  
   
   bool PaddleTrackOpflash::initialize() {
     
-    if(!_v_pe_hist)
-      _v_pe_hist =  new TH2F("PE","PE",100,-5,20,100,0,3000);
+    if (!_configured){
+      print(msg::kERROR,__FUNCTION__,"Muct be configured before running");
+      return false;
+    }
     
+    _hRatioMap = new TH2F("hRatioMap", "Hypothesis / Optical Reco. per PMT;Channel;Ratio",
+			  32,-0.5,31.5,
+			  100,0,3);
+    _hRatioPLOP = new TH1F("hRatioPLOP","Hypothesis / Optical Reco.",50,0,2);
+
     if (_tree) {delete _tree;}
     _tree = new TTree("PaddleTree", "PaddleTree");
     
@@ -95,7 +133,7 @@ namespace larlite {
     _length_zfiducial = larutil::Geometry::GetME()->DetLength();
     
     _vfiducial    = ::geoalgo::AABox(0, -_length_yfiducial, 0,
-				  2 * _length_xfiducial, _length_yfiducial,_length_zfiducial);
+				     2 * _length_xfiducial, _length_yfiducial,_length_zfiducial);
     _vphotonlib   = ::geoalgo::AABox(-62.2517,-190.427,-125.628,318.602,190.427,1162.63);
     _vmucs_top    = ::geoalgo::AABox(-71.795, 393.941, 531.45, -23.795, 398.451, 579.45);
     //_vmucs_top = ::geoalgo::AABox(-271.795, 393.941, 331.45, 223.795, 398.451, 779.45);
@@ -140,15 +178,13 @@ namespace larlite {
     ///////////////////Use Real Data/////////////////////
     /////////////////////////////////////////////////////
     
-    if(_useData){
-      auto ev_reco = storage->get_data<event_track>("trackkalmanhit");
-      //auto ev_reco = storage->get_data<event_track>("stitchkalmanhit");
+    if(_ifusedata){
+      auto ev_reco = storage->get_data<event_track>(_track_producer);
       if (!ev_reco) {
 	std::cout<<"........Couldn't find reco track data product in this event...... "<<std::endl;
       }
       
-      //auto ev_ophit = storage->get_data<event_ophit>("opFlash");
-      auto ev_ophit = storage->get_data<event_ophit>("OpHitFinder");
+      auto ev_ophit = storage->get_data<event_ophit>(_ophit_producer);
       if (!ev_ophit) {
 	std::cout<<"........Couldn't find ophit data product in this event...... "<<std::endl;
       }
@@ -337,39 +373,34 @@ namespace larlite {
     /////////////Use Simulation Data/////////////////////
     /////////////////////////////////////////////////////
     
-    if(_useSimulation){
+    if(!_ifusedata){
 
-      auto ev_reco = storage->get_data<event_track>("trackkalmanhit");
-      //auto ev_reco = storage->get_data<event_track>("trackkalmanhitcc");
-      //auto ev_reco = storage->get_data<event_track>("stitchkalmanhit");
-      //auto ev_reco = storage->get_data<event_track>("stitchkalmanhitcc");
-      //auto ev_reco = storage->get_data<event_track>("pandoraCosmicKHit");
-      //auto ev_reco = storage->get_data<event_track>("pandoraNuKHit");
+      auto ev_reco = storage->get_data<event_track>(_track_producer);
       if (!ev_reco) {
 	std::cout<<"........Couldn't find reco track data product in this event...... "<<std::endl;
       }
       
-      auto ev_mct    = storage->get_data<event_mctrack>("mcreco");
+      auto ev_mct    = storage->get_data<event_mctrack>(_mc_producer);
       if (!ev_mct) {
 	std::cout<<"........Couldn't find mctrack data product in this event...... "<<std::endl;
       }
       
-      auto ev_mcs    = storage->get_data<event_mcshower>("mcreco");
+      auto ev_mcs    = storage->get_data<event_mcshower>(_mc_producer);
       if (!ev_mcs) {
 	std::cout<<"........Couldn't find mcshower data product in this event...... "<<std::endl;
       }
       
-      auto ev_ophit = storage->get_data<event_ophit>("opflashSat");
+      auto ev_ophit = storage->get_data<event_ophit>(_ophit_producer);
       if (!ev_ophit) {
 	std::cout<<"........Couldn't find ophit data product in this event...... "<<std::endl;
       }
 
-      auto ev_opflash = storage->get_data<event_opflash>("opflashSat");
+      auto ev_opflash = storage->get_data<event_opflash>(_opflash_producer);
       if (!ev_ophit) {
 	std::cout<<"........Couldn't find opflash data product in this event...... "<<std::endl;
       }      
       
-      auto ev_simpho = storage->get_data<event_simphotons>("largeant");
+      auto ev_simpho = storage->get_data<event_simphotons>(_g4_producer);
       if (!ev_simpho){
 	std::cout<<"........Couldn't find sim photon data product in this event...... "<<std::endl;
       }
@@ -407,8 +438,6 @@ namespace larlite {
 	
 	  if(ophit.PeakTime()>=t &&ophit.PeakTime()<=t+5)
 	    {
-	      _v_pe_hist->Fill(ophit.PeakTime()-t,ophit.PE());
-	      
 	      auto const pmt_id = geo->OpDetFromOpChannel(ophit.OpChannel());
 	      
 	      _pe_ophit[pmt_id] += ophit.PE();
@@ -584,7 +613,7 @@ namespace larlite {
       }*/
 
       //MCQCluster
-      if(_useMCQCluster){
+      if(!_ifuselightpath){
 	
 	MCQ.UseXshift(true);
 	MCQ.Construct(*ev_mct,*ev_mcs);
@@ -620,8 +649,8 @@ namespace larlite {
 	  }
 	}
       }
-      //QCluster
-      if(_useQCluster){
+      //Use light path
+      if(_ifuselightpath){
 	
 	for(size_t i = 0; i <_retrj.size(); ++i ){
 
@@ -636,11 +665,20 @@ namespace larlite {
 	  }
 	}
       }
-      
+
       /////Conclusion
+
+      for(size_t ch = 0; ch<32 ;++ch){
+
+	_hRatioMap->Fill(ch,_pe_mchit[ch]/_pe_ophit[ch]);
+	
+      }
+      
       _pe_mchit_sum = std::accumulate(std::begin(_pe_mchit),std::end(_pe_mchit),0.0);
       _pe_ophit_sum = std::accumulate(std::begin(_pe_ophit),std::end(_pe_ophit),0.0);
 
+      _hRatioPLOP->Fill(_pe_mchit_sum/_pe_ophit_sum);
+      
       _tree->Fill();
     }
     return true;
@@ -648,30 +686,25 @@ namespace larlite {
   
   bool PaddleTrackOpflash::finalize() {
     
-    /*std::cout<<_pe_ophit.size()<<std::endl;
-      for(size_t i=0; i< _pe_ophit.size(); i++){
-      double bincontent = _pe_ophit.at(i);
-      std::cout<<_pe_ophit.at(i)<<std::endl;
-      _pe_dis_hist->SetBinContent(i+1,bincontent);
-      }*/
-    
     _track_positions.close();
     
-    if(_useData){
+    if(_ifusedata){
       if(_fout){
 	_fout->cd();
 	if(_tree) _tree->Write();
 	std::cout<<"\n"<<_n_evt_paddle<<" MuCS-through-going muons found in "<<_n_evt<<" events"<<std::endl;
+	_hRatioPLOP->Write();
+	_hRatioMap->Write();
       }
     }
     
-    if(_useSimulation){
+    if(!_ifusedata){
       if(_fout){
         _fout->cd();
         if(_tree) _tree->Write();
 	std::cout<<"\n"<<_count<<" events found to be contained in Fiducial Volume of TPC of total evts "<<_n_evt<<std::endl;
-	
-	_v_pe_hist->Write();
+	_hRatioPLOP->Write();
+	_hRatioMap->Write();
 	
       }
     }

@@ -1,7 +1,6 @@
 import sys,os
 
-from ROOT import *
-#gSystem.Load("libMy_Repo_scratch_area.so")
+#from ROOT import *
 
 if len(sys.argv) < 2:
     msg  = '\n'
@@ -10,16 +9,23 @@ if len(sys.argv) < 2:
     sys.stderr.write(msg)
     sys.exit(1)
 
+import ROOT
 from larlite import larlite as fmwk
-from ROOT import flashana
-from ROOT import fcllite
+
+#from ROOT import fcllite, flashana
 
 # Create ana_processor instance
 my_proc = fmwk.ana_processor()
 
+# Config File
+cfg=sys.argv[1]
+if not cfg.endswith('.fcl'):
+    print 'Need for fcl file'
+    sys.exit(1)
+
 # Set input root file
-for x in xrange(len(sys.argv)-1):
-    my_proc.add_input_file(sys.argv[x+1])
+for x in xrange(len(sys.argv)-2):
+    my_proc.add_input_file(sys.argv[x+2])
 
 # Specify IO mode
 my_proc.set_io_mode(fmwk.storage_manager.kREAD)
@@ -29,25 +35,12 @@ my_proc.set_ana_output_file("PaddleTrackOpflash_output.root");
 
 # Attach an analysis unit ... here we use a base class which does nothing.
 # Replace with your analysis unit if you wish.
-#pset = fcllite.PSet("flashdsasdmatch.fcl")
-#LP = flashana.LightPath()
-#LP.Configure(pset)
 
-my_unit  = fmwk.PaddleTrackOpflash()
-#my_unit.setLP(LP)
-#my_unit2 = fmwk.TrackDeviation()
+myunit = fmwk.PaddleTrackOpflash()
+myunit.configure(cfg)
 
-#my_unit.UseData(True)
-my_unit.UseData(False)# Flase use simulation data
+my_proc.add_process(myunit)
 
-my_unit.UseQCluster(True)# True use Recotrack(LightPath)
-#my_unit.UseQCluster(False)# Flase use MCTrack(MCQCluster or LightPath)
-
-#my_unit2.UseRealData(False)#False use simulation data
-
-#my_unit.SetSaveHistos()
-my_proc.add_process(my_unit)
-#my_proc.add_process(my_unit2)
 print
 print  "Finished configuring ana_processor. Start event loop!"
 print
